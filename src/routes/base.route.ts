@@ -7,7 +7,7 @@ import DB from '../databases'
 import authMiddleware from '@middlewares/auth.middleware'
 
 class BaseRoute implements Route {
-  public path = ''
+  public path = '/'
   public router = Router()
   public static usersTableName = ["users"]
   public static relTables = []
@@ -23,21 +23,21 @@ class BaseRoute implements Route {
   }
 
   private baseCRUD(currentTableName: string, createDto: any) {
-    this.router.get(`/${currentTableName}/:id(\\d+)`,
+    this.router.get(`${this.path}${currentTableName}/:id(\\d+)`,
       (req, res, next) => BaseControler.getDataById(req, res, next, currentTableName))
-    this.router.get(`/${currentTableName}s`,
+    this.router.get(`${this.path}${currentTableName}s`,
       (req, res, next) => BaseControler.getAllDatas(req, res, next, currentTableName))
-    this.router.get(`/${currentTableName}sonefield/:attrName`,
+    this.router.get(`${this.path}${currentTableName}sonefield/:attrName`,
       (req, res, next) => BaseControler.getAllDataOneField(req, res, next, currentTableName))
-    this.router.get(`/${currentTableName}s/:attrName/:attrVal`,
+    this.router.get(`${this.path}${currentTableName}s/:attrName/:attrVal`,
       (req, res, next) => BaseControler.getManyByAttrVal(req, res, next, currentTableName))
     if (createDto) {
-      this.router.post(`/${currentTableName}`, validationMiddleware(createDto, 'body'),
+      this.router.post(`${this.path}${currentTableName}`, validationMiddleware(createDto, 'body'),
         (req, res, next) => BaseControler.createData(req, res, next, currentTableName))
-      this.router.put(`/${currentTableName}/:id(\\d+)`, validationMiddleware(createDto, 'body', true),
+      this.router.put(`${this.path}${currentTableName}/:id(\\d+)`, validationMiddleware(createDto, 'body', true),
         (req, res, next) => BaseControler.updateData(req, res, next, currentTableName))
     }
-    this.router.delete(`/${currentTableName}/:id(\\d+)`,
+    this.router.delete(`${this.path}${currentTableName}/:id(\\d+)`,
       (req, res, next) => BaseControler.deleteData(req, res, next, currentTableName))
   }
 }
