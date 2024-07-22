@@ -9,11 +9,11 @@ interface EmailOptions {
 }
 
 /**
-  * @param { string } host - Exemple : 'smtp.gmail.com'
-  * @param { number } port - 465 for secure port or 587
-  * @param { string } user - User mail
-  * @param { string } pass - User password
-  */
+ * @param { string } host - Exemple : 'smtp.gmail.com'
+ * @param { number } port - 465 for secure port or 587
+ * @param { string } user - User mail
+ * @param { string } pass - User password
+ */
 export class MailerUtil {
   private transporter: Transporter;
 
