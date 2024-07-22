@@ -2,7 +2,7 @@ process.env['NODE_CONFIG_DIR'] = __dirname + '/configs';
 
 import 'dotenv/config';
 import App from './app';
-import validateEnv from './utils/validateEnv'
+import validateEnv from './utils/validateEnv.util'
 import BaseRoute from './routes/base.route'
 // import AuthRoute from './routes/auth.route'
 // import FilterRoute from './routes/filter.route'

@@ -1,4 +1,4 @@
-export default class GenericCRUD<T> {
+export default class GenericCRUDUtil<T> {
   private data: T[] = []
 
   create(item: T) {
