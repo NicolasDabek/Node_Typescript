@@ -6,18 +6,20 @@ import { BaseDto } from "@/dtos/base.dto"
 class BaseController {
   static baseService = new BaseService()
 
-  static async getAllDatas(req: Request, res: Response, next: NextFunction, tableName: string) {
+  static async getAllDatas(req: Request, res: Response, next: NextFunction) {
     try {
-      const findAllData: Model[] = await BaseController.baseService.findAllData(tableName)
+      const tableName = req.params.model.toString()
+      const findAllDatas: Model[] = await BaseController.baseService.findAllDatas(tableName)
 
-      res.status(200).json({ datas: findAllData, message: 'findAll' })
+      res.status(200).json({ datas: findAllDatas, message: 'findAll' })
     } catch (error) {
       next(error)
     }
   }
 
-  static async getDataById(req: Request, res: Response, next: NextFunction, tableName: string) {
+  static async getDataById(req: Request, res: Response, next: NextFunction) {
     try {
+      const tableName = req.params.model.toString()
       const dataId = Number(req.params.id)
       const findOneData: Model = await BaseController.baseService.findDataById(tableName, dataId)
 
@@ -26,29 +28,38 @@ class BaseController {
     catch (error) { next(error) }
   }
 
-  static async getAllDataOneField(req: Request, res: Response, next: NextFunction, tableName: string) {
+  /**
+   * Récupère un seul champ sur toutes les entrées.
+   */
+  static async getAllDataOneField(req: Request, res: Response, next: NextFunction) {
     try {
-      const attrName = req.params.attrName.toString()
-      const findAllData: Model[] = await BaseController.baseService.findAllDataOneField(tableName, attrName)
+      const tableName = req.params.model.toString()
+      const fieldName = req.params.fieldName.toString()
+      const findAllDatas: Model[] = await BaseController.baseService.findAllDatasOneField(tableName, fieldName)
 
-      res.status(200).json({ datas: findAllData, message: 'findAll' })
+      res.status(200).json({ datas: findAllDatas, message: 'findAll' })
     }
     catch (error) { next(error) }
   }
 
-  static async getManyByAttrVal(req: Request, res: Response, next: NextFunction, tableName: string) {
+  /**
+   * Récupère plusieurs entrées par la valeur d'un champ.
+   */
+  static async getMultipleByFieldVal(req: Request, res: Response, next: NextFunction) {
     try {
-      const attributName: string = req.params.attrName
-      const attributVal: number = Number(req.params.attrVal)
-      const findManyData: Model[] = await BaseController.baseService.findManyByAttrName(tableName, attributName, attributVal)
+      const tableName = req.params.model.toString()
+      const fieldName: string = req.params.fieldName
+      const fieldVal: number = Number(req.params.fieldVal)
+      const findMultipleDatas: Model[] = await BaseController.baseService.findMultipleByFieldName(tableName, fieldName, fieldVal)
 
-      res.status(200).json({ datas: findManyData, message: 'findMany' })
+      res.status(200).json({ datas: findMultipleDatas, message: 'findMultiple' })
     }
     catch (error) { next(error) }
   }
 
-  static async createData(req: Request, res: Response, next: NextFunction, tableName: string) {
+  static async createData(req: Request, res: Response, next: NextFunction) {
     try {
+      const tableName = req.params.model.toString()
       const datas: BaseDto = req.body
       const createdData: Model = await BaseController.baseService.createData(tableName, datas)
 
@@ -58,8 +69,9 @@ class BaseController {
     }
   }
 
-  static async updateData(req: Request, res: Response, next: NextFunction, tableName: string) {
+  static async updateData(req: Request, res: Response, next: NextFunction) {
     try {
+      const tableName = req.params.model.toString()
       const dataId = Number(req.params.id)
       const datas: BaseDto = req.body
       const updatedData: Model = await BaseController.baseService.updateData(tableName, dataId, datas)
@@ -70,8 +82,9 @@ class BaseController {
     }
   }
 
-  static async deleteData(req: Request, res: Response, next: NextFunction, tableName: string) {
+  static async deleteData(req: Request, res: Response, next: NextFunction) {
     try {
+      const tableName = req.params.model.toString()
       const dataId = Number(req.params.id)
       const deletedData: Model = await BaseController.baseService.deleteData(tableName, dataId)
 

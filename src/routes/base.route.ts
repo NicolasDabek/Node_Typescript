@@ -7,38 +7,31 @@ import DB from '../databases'
 import authMiddleware from '@middlewares/auth.middleware'
 
 class BaseRoute implements Route {
-  public path = '/'
+  public path = '/:model'
   public router = Router()
   public static usersTableName = ["users"]
   public static relTables = []
+  private activateAuthMiddleware = true
+  private checkAuth = (req, res, next) => next()
 
   constructor() {
     this.initializeRoutes()
+
+    if(this.activateAuthMiddleware) this.checkAuth = authMiddleware 
   }
 
   private initializeRoutes() {
-    for (const tableName of Object.keys(DB.Models)) {
-      this.baseCRUD(tableName, CreateDtos[tableName] || null)
-    }
+    this.baseCRUD()
   }
 
-  private baseCRUD(currentTableName: string, createDto: any) {
-    this.router.get(`${this.path}${currentTableName}/:id(\\d+)`,
-      (req, res, next) => BaseControler.getDataById(req, res, next, currentTableName))
-    this.router.get(`${this.path}${currentTableName}s`,
-      (req, res, next) => BaseControler.getAllDatas(req, res, next, currentTableName))
-    this.router.get(`${this.path}${currentTableName}sonefield/:attrName`,
-      (req, res, next) => BaseControler.getAllDataOneField(req, res, next, currentTableName))
-    this.router.get(`${this.path}${currentTableName}s/:attrName/:attrVal`,
-      (req, res, next) => BaseControler.getManyByAttrVal(req, res, next, currentTableName))
-    if (createDto) {
-      this.router.post(`${this.path}${currentTableName}`, validationMiddleware(createDto, 'body'),
-        (req, res, next) => BaseControler.createData(req, res, next, currentTableName))
-      this.router.put(`${this.path}${currentTableName}/:id(\\d+)`, validationMiddleware(createDto, 'body', true),
-        (req, res, next) => BaseControler.updateData(req, res, next, currentTableName))
-    }
-    this.router.delete(`${this.path}${currentTableName}/:id(\\d+)`,
-      (req, res, next) => BaseControler.deleteData(req, res, next, currentTableName))
+  private baseCRUD() {
+    this.router.get(`${this.path}`, this.checkAuth, BaseControler.getAllDatas)
+    this.router.get(`${this.path}/:id(\\d+)`, this.checkAuth, BaseControler.getDataById)
+    this.router.get(`${this.path}/onefield/:fieldName`, this.checkAuth, BaseControler.getAllDataOneField)
+    this.router.get(`${this.path}/multiple/:fieldName/:fieldVal`, this.checkAuth, BaseControler.getMultipleByFieldVal)
+    this.router.post(`${this.path}`, this.checkAuth, validationMiddleware(), BaseControler.createData)
+    this.router.put(`${this.path}/:id(\\d+)`, this.checkAuth, validationMiddleware('body', true), BaseControler.updateData)
+    this.router.delete(`${this.path}/:id(\\d+)`, this.checkAuth, BaseControler.deleteData)
   }
 }
 
