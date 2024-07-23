@@ -5,24 +5,25 @@ import DB from '@databases'
 import HttpException from '@exceptions/HttpException'
 import { DataStoredInToken, RequestWithUser } from '@interfaces/auth.interface'
 
-const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFunction, minRole?: number) => {
+const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFunction) => {
   try {
-    const Authorization = req.headers.authorization
+    const token = req.headers.authorization?.replace('Bearer ', '')
 
-    if (Authorization) {
+    if (!token) {
+      return res.status(401).json({ error: 'Access denied, no token provided.' });
+    }
+    else {
       const secretKey: string = config.get('secretKey')
-      const tokenVerified = jwt.verify(Authorization, secretKey) as DataStoredInToken
+      const tokenVerified = jwt.verify(token, secretKey) as DataStoredInToken
       const userId = tokenVerified.id
-      const findUser = await DB.Models.users.findByPk(userId)
+      const findedUser = await DB.Models.users.findByPk(userId)
 
-      if(findUser) {
-        req.user = findUser
+      if(findedUser) {
+        req.user = findedUser
         next()
       } else {
         next(new HttpException(401, 'Wrong authentication token'))
       }
-    } else {
-      next(new HttpException(404, 'Authentication token missing'))
     }
   } catch (error) {
     next(new HttpException(401, 'Wrong authentication token'))
