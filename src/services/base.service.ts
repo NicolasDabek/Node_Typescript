@@ -9,7 +9,7 @@ import BaseRoute from '@/routes/base.route'
 class BaseService {
   private models = DB.Models
 
-  public async findAllData(tableName: string): Promise<Model[]> {
+  public async findAllDatas(tableName: string): Promise<Model[]> {
     if (isEmpty(tableName)) throw new HttpException(400, "You're not tableName")
     let allData: Model[] = await this.models[tableName].findAll()
     return allData
@@ -24,17 +24,23 @@ class BaseService {
     return findData
   }
 
-  public async findAllDataOneField(tableName: string, attrName: string): Promise<Model[]> {
+  /**
+   * Récupère un seul champ sur toutes les entrées.
+   */
+  public async findAllDatasOneField(tableName: string, fieldName: string): Promise<Model[]> {
     let allData: any[]
-    const options: any = { where: { deleted: 0 }, attributes: ["id", attrName] }
+    const options: any = { where: { deleted: 0 }, attributes: ["id", fieldName] }
 
     allData = await this.models[tableName].findAll(options)
     return allData
   }
 
-  public async findManyByAttrName(tableName: string, attrName: string, attrVal: number): Promise<Model[]> {
-    if (isEmpty(attrName) || isEmpty(attrVal)) throw new HttpException(400, "empty data not allowed")
-    const options: Object = { where: { [attrName]: attrVal } }
+  /**
+   * Récupère plusieurs entrées par la valeur d'un champ.
+   */
+  public async findMultipleByFieldName(tableName: string, fieldName: string, fieldVal: number): Promise<Model[]> {
+    if (isEmpty(fieldName) || isEmpty(fieldVal)) throw new HttpException(400, "empty data not allowed")
+    const options: Object = { where: { [fieldName]: fieldVal } }
 
     const rows: any[] = await this.models[tableName].findAll(options)
     if (!rows) throw new HttpException(409, "no row found")
@@ -49,7 +55,7 @@ class BaseService {
     //if (findData) throw new HttpException(409, `You're email ${datas.id} already exists`)
 
     if(BaseRoute.usersTableName.includes(tableName) && datas["password"]) {
-      datas["password"] = await bcrypt.hash(datas["password"], 6)
+      datas["password"] = await bcrypt.hash(datas["password"], process.env.USER_PASSWORD_HASH_SALT)
     }
     const createdata: Model = await this.models[tableName].create(datas)
     return createdata
@@ -62,7 +68,7 @@ class BaseService {
     if (!findData) throw new HttpException(409, "You're not data")
 
     if(BaseRoute.usersTableName.includes(tableName) && datas["password"]) {
-      datas["password"] = await bcrypt.hash(datas["password"], 10)
+      datas["password"] = await bcrypt.hash(datas["password"], process.env.USER_PASSWORD_HASH_SALT)
     }
     await this.models[tableName].update(datas, { where: { id: dataId } })
 

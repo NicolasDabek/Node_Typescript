@@ -10,7 +10,7 @@ import swaggerUi from 'swagger-ui-express';
 import DB from '@databases';
 import Routes from '@interfaces/routes.interface';
 import errorMiddleware from '@middlewares/error.middleware';
-import { logger, stream } from '@utils/logger';
+import { logger, stream } from '@utils/logger.util';
 import csurf from "csurf"
 import session from "express-session"
 
@@ -81,13 +81,12 @@ class App {
     const options = {
       swaggerDefinition: {
         info: {
-          title: 'MDA Roubaix',
+          title: 'Informations utilisateurs',
           version: '0.0.1',
           description: 'Résumé des APIs',
         },
       },
-      apis: ['swagger/association.yaml', 'swagger/besoin.yaml', 'swagger/question.yaml', 'swagger/reponse.yaml', 
-        'swagger/service.yaml', 'swagger/utilisateur.yaml'],
+      apis: ['swagger/users.yaml', 'swagger/informations.yaml'],
     };
 
     const specs = swaggerJSDoc(options);

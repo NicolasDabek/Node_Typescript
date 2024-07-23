@@ -5,9 +5,6 @@ export interface DataStoredInToken {
   id: number
   mail: string
   role?: number
-  utilisateurBesoins?: number[]
-  id_langue?: number
-  id_annee_enfants?: number[]
 }
 
 export interface TokenData {
