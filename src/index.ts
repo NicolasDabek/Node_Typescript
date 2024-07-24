@@ -1,4 +1,4 @@
-process.env['NODE_CONFIG_DIR'] = __dirname + '/configs';
+process.env['NODE_CONFIG_DIR'] = __dirname + '/config';
 
 import 'dotenv/config';
 import App from './app';
@@ -11,6 +11,6 @@ import BaseRoute from './routes/base.route'
 
 validateEnv()
 
-const app = new App([new BaseRoute()])
+export const app = new App([new BaseRoute()])
 
 app.listen()

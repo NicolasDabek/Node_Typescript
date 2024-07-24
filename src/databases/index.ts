@@ -2,9 +2,16 @@ import config from 'config';
 import Sequelize from 'sequelize';
 import { dbConfig } from '@interfaces/db.interface';
 import { logger } from '@utils/logger.util';
-import { initModels } from '@/models/init-models';
+import { initModels } from '@models/init-models';
 
-const { host, user, password, database, pool, port }: dbConfig = config.get('dbConfig');
+let configDB
+try {
+  configDB = config.get("dbConfig")
+} catch (error) {
+  console.error(error)
+}
+
+const { host, user, password, database, pool, port }: dbConfig = configDB
 const sequelize = new Sequelize.Sequelize(database, user, password, {
   host: host,
   dialect: 'mysql',

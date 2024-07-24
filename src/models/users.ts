@@ -17,6 +17,9 @@ export type usersOptionalAttributes = "id" | "isActive";
 export type usersCreationAttributes = Optional<usersAttributes, usersOptionalAttributes>;
 
 export class users extends Model<usersAttributes, usersCreationAttributes> implements usersAttributes {
+  static users(arg0: string, users: any, arg2: { pseudo: string; email: string; password: string; isActive: boolean; addressIP: string; dateCreation: Date; }) {
+    throw new Error('Method not implemented.');
+  }
   id!: number;
   pseudo!: string;
   password!: string;

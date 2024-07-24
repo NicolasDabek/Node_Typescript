@@ -11,7 +11,7 @@ class BaseRoute implements Route {
   public router = Router()
   public static usersTableName = ["users"]
   public static relTables = []
-  private activateAuthMiddleware = true
+  private activateAuthMiddleware = false
   private checkAuth = (req, res, next) => next()
 
   constructor() {

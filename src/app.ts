@@ -13,11 +13,14 @@ import errorMiddleware from '@middlewares/error.middleware';
 import { logger, stream } from '@utils/logger.util';
 import csurf from "csurf"
 import session from "express-session"
+import { Server } from 'http';
 
 class App {
   public app: express.Application;
   public port: string | number;
   public env: string;
+  public dbSequelize = DB
+  public server: Server
 
   constructor(routes: Routes[]) {
     this.app = express();
@@ -32,7 +35,7 @@ class App {
   }
 
   public listen() {
-    this.app.listen(this.port, () => {
+    this.server = this.app.listen(this.port, () => {
       logger.info(`=================================`);
       logger.info(`======= ENV: ${this.env} =======`);
       logger.info(`🚀 App listening on the port ${this.port}`);

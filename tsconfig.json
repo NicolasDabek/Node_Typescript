@@ -21,9 +21,9 @@
     "importHelpers": true,
     "baseUrl": "src",
     "paths": {
-      "@/*": ["*"],
+      "@*": ["*"],
       "@controllers/*": ["controllers/*"],
-      "@databases": ["databases"],
+      "@databases/": ["databases/"],
       "@dtos/*": ["dtos/*"],
       "@exceptions/*": ["exceptions/*"],
       "@interfaces/*": ["interfaces/*"],
@@ -34,6 +34,6 @@
       "@utils/*": ["utils/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.json", ".env"],
+  "include": ["src/**/*.ts", "src/**/*.json", ".env", "tests/**/*.test.ts"],
   "exclude": ["node_modules"]
 }
