@@ -1,7 +1,6 @@
 import request from 'supertest';
-import { app } from '../src/index'; 
+import { app } from '../src/index';
 import DB from '@databases';
-import supertest from 'supertest';
 
 const userData = {
   pseudo: 'testuser',
@@ -9,19 +8,38 @@ const userData = {
   email: 'testuser@example.com',
   isActive: true,
   addressIP: '127.0.0.1',
-  dateCreation: new Date().toISOString()
+  dateCreation: new Date().toISOString().slice(0, -4) + "000Z"
 };
 
-const testCRUD = (modelName: string, model: any, sampleData: Object) => {
+const testCRUD = (modelName, model, sampleData) => {
   describe(`CRUD operations for ${modelName}`, () => {
-    let itemId: number;
+    let itemId;
 
-    afterAll(() => {
-      app.server.close(); // Réinitialiser la base de données
+    beforeAll(done => {
+      // Start the server and wait for it to be ready
+      app.server.on("connect", async () => {
+        console.log('Server is listening');
+        await DB.sequelize.sync({ force: true });
+        done();
+      });
+
+      app.server.on('error', err => {
+        console.error('Server encountered an error:', err);
+        done(err);
+      });
+    });
+
+    afterAll(done => { 
+      // Close the server and wait for it to close
+      app.server.close(() => {
+        console.log('Server has been closed');
+        DB.sequelize.close();
+        done();
+      });
     });
 
     it(`should create a new ${modelName}`, async () => {
-      const response = await supertest(app.server)
+      const response = await request(app.server)
         .post(`/${modelName.toLowerCase()}s`)
         .set('Content-Type', 'application/json')
         .send(sampleData)
@@ -36,11 +54,11 @@ const testCRUD = (modelName: string, model: any, sampleData: Object) => {
     it(`should retrieve all ${modelName}s`, async () => {
       await model.create(sampleData); // Créer un exemple pour le test
 
-      const response = await supertest(app.server)
+      const response = await request(app.server)
         .get(`/${modelName.toLowerCase()}s`)
         .expect(200);
 
-      expect(response.body.length).toBeGreaterThanOrEqual(1);
+      expect(response.body["datas"].length).toBeGreaterThanOrEqual(1);
     });
 
     it(`should retrieve a single ${modelName} by ID`, async () => {
@@ -73,7 +91,7 @@ const testCRUD = (modelName: string, model: any, sampleData: Object) => {
 
       await request(app.server)
         .delete(`/${modelName.toLowerCase()}s/${itemId}`)
-        .expect(204);
+        .expect(200);
 
       await request(app.server)
         .get(`/${modelName.toLowerCase()}s/${itemId}`)

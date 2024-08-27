@@ -109,14 +109,14 @@ function generateSwaggerFiles(router) {
     `;
 
     // Écrire le fichier dans le dossier swaggerDocs
-    const filePath = join(__dirname, 'swaggerDocs', `route${index + 1}.ts`);
+    const filePath = join(__dirname, '../swaggerDocs', `route${index + 1}.js`);
     writeFileSync(filePath, docContent, 'utf8');
   });
 }
 
 // Assurez-vous que le dossier swaggerDocs existe
-if (!existsSync(join(__dirname, 'swaggerDocs'))) {
-  mkdirSync(join(__dirname, 'swaggerDocs'));
+if (!existsSync(join(__dirname, '../swaggerDocs'))) {
+  mkdirSync(join(__dirname, '../swaggerDocs'));
 }
 
 // Générer les fichiers
