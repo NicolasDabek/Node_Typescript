@@ -17,6 +17,7 @@ import { Server } from 'http';
 
 class App {
   public app: express.Application;
+  public routes: Routes[]
   public port: string | number;
   public env: string;
   public dbSequelize = DB
@@ -24,6 +25,7 @@ class App {
 
   constructor(routes: Routes[], generateSwaggerDocs: boolean = false) {
     this.app = express();
+    this.routes = routes;
     this.port = process.env.PORT || 3000;
     this.env = process.env.NODE_ENV || 'development';
     if(!generateSwaggerDocs) {
