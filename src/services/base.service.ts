@@ -62,10 +62,10 @@ class BaseService {
   }
 
   public async updateData(tableName: string, dataId: number, datas: BaseDto): Promise<Model> {
-    if (isEmpty(datas)) throw new HttpException(400, "You're not datas")
+    if (isEmpty(datas)) throw new HttpException(400, "Data Id not found")
 
     const findData: Model = await this.models[tableName].findByPk(dataId)
-    if (!findData) throw new HttpException(409, "You're not data")
+    if (!findData) throw new HttpException(404, "Data not found")
 
     if(BaseRoute.usersTableName.includes(tableName) && datas["password"]) {
       datas["password"] = await bcrypt.hash(datas["password"], process.env.USER_PASSWORD_HASH_SALT)
@@ -77,10 +77,10 @@ class BaseService {
   }
 
   public async deleteData(tableName: string, dataId: number): Promise<Model> {
-    if (isEmpty(dataId)) throw new HttpException(400, "You're not dataId")
+    if (isEmpty(dataId)) throw new HttpException(400, "Data Id not found")
 
     const findData: Model = await this.models[tableName].findByPk(dataId)
-    if (!findData) throw new HttpException(409, "You're not data")
+    if (!findData) throw new HttpException(404, "Data not found")
 
     await this.models[tableName].destroy({ where: { id: dataId } })
 
