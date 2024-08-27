@@ -28,6 +28,7 @@ class App {
     this.routes = routes;
     this.port = process.env.PORT || 3000;
     this.env = process.env.NODE_ENV || 'development';
+
     if(!generateSwaggerDocs) {
       this.connectToDatabase();
     }
@@ -57,7 +58,7 @@ class App {
   private initializeMiddlewares() {
     if (process.env.NODE_ENV === 'production') {
       this.app.use(morgan('combined', { stream }))
-      this.app.use(cors({ origin: 'your.domain.com', credentials: true }))
+      this.app.use(cors({ origin: process.env.DOMAIN_NAME, credentials: true }))
     } else {
       this.app.use(morgan('dev', { stream }))
       this.app.use(cors({ origin: true, credentials: true }))
@@ -98,7 +99,7 @@ class App {
           },
         ],
       },
-      apis: ['**/swaggerDocs/**/*.js'],
+      apis: ['../swaggerDocs/**/*.js'],
     };
 
     const specs = swaggerJSDoc(options);
