@@ -1,8 +1,8 @@
 import config from 'config';
 import Sequelize from 'sequelize';
-import { dbConfig } from '@interfaces/db.interface';
-import { logger } from '@utils/logger.util';
-import { initModels } from '@models/init-models';
+import { dbConfig } from '../interfaces/db.interface';
+import { logger } from '../utils/logger.util';
+import { initModels } from '../models/init-models';
 
 let configDB
 try {

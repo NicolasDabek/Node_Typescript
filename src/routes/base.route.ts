@@ -1,11 +1,11 @@
 import { NextFunction, Response, Router } from 'express'
-import BaseControler from '@controllers/base.controller'
-import CreateDtos from '@dtos/createDtos/index'
-import Route from '@interfaces/routes.interface'
-import validationMiddleware from '@middlewares/validation.middleware'
+import BaseControler from '../controllers/base.controller'
+import CreateDtos from '../dtos/createDtos/index'
+import Route from '../interfaces/routes.interface'
+import validationMiddleware from '../middlewares/validation.middleware'
 import DB from '../databases'
-import authMiddleware from '@middlewares/auth.middleware'
-import { RequestWithUser } from '@interfaces/auth.interface'
+import authMiddleware from '../middlewares/auth.middleware'
+import { RequestWithUser } from '../interfaces/auth.interface'
 
 class BaseRoute implements Route {
   public path = '/:model'

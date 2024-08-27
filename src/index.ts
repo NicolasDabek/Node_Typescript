@@ -7,7 +7,7 @@ import BaseRoute from './routes/base.route'
 // import AuthRoute from './routes/auth.route'
 // import IndexRoute from './routes/index.route'
 // import MailRoute from './routes/mail.route'
-// import NotificationRoute from '@routes/notification.route'
+// import NotificationRoute from './routes/notification.route'
 
 validateEnv()
 

@@ -1,8 +1,8 @@
 import { plainToInstance } from 'class-transformer'
 import { validate, ValidationError } from 'class-validator'
 import { RequestHandler } from 'express'
-import HttpException from '@exceptions/HttpException'
-import CreateDtos from '@dtos/createDtos/index'
+import HttpException from '../exceptions/HttpException'
+import CreateDtos from '../dtos/createDtos/index'
 
 const validationMiddleware = (
   value: string | 'body' | 'query' | 'params' = 'body',

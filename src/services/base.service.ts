@@ -1,10 +1,10 @@
 import bcrypt from 'bcrypt'
-import DB from '@databases'
-import HttpException from '@exceptions/HttpException'
-import { isEmpty } from '@utils/others.util'
+import DB from '../databases'
+import HttpException from '../exceptions/HttpException'
+import { isEmpty } from '../utils/others.util'
 import { Model } from 'sequelize/types/model'
-import { BaseDto } from '@dtos/base.dto'
-import BaseRoute from '@routes/base.route'
+import { BaseDto } from '../dtos/base.dto'
+import BaseRoute from '../routes/base.route'
 
 class BaseService {
   private models = DB.Models

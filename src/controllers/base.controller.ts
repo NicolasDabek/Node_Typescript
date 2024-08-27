@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express"
-import BaseService from "@services/base.service"
+import BaseService from "../services/base.service"
 import Model from "sequelize/types/model"
-import { BaseDto } from "@dtos/base.dto"
+import { BaseDto } from "../dtos/base.dto"
 
 class BaseController {
   static baseService = new BaseService()

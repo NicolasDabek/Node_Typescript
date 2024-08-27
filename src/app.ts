@@ -7,10 +7,10 @@ import hpp from 'hpp';
 import morgan from 'morgan';
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import DB from '@databases';
-import Routes from '@interfaces/routes.interface';
-import errorMiddleware from '@middlewares/error.middleware';
-import { logger, stream } from '@utils/logger.util';
+import DB from './databases';
+import Routes from './interfaces/routes.interface';
+import errorMiddleware from './middlewares/error.middleware';
+import { logger, stream } from './utils/logger.util';
 import csurf from "csurf"
 import session from "express-session"
 import { Server } from 'http';
@@ -22,24 +22,25 @@ class App {
   public dbSequelize = DB
   public server: Server
 
-  constructor(routes: Routes[]) {
+  constructor(routes: Routes[], generateSwaggerDocs: boolean = false) {
     this.app = express();
     this.port = process.env.PORT || 3000;
     this.env = process.env.NODE_ENV || 'development';
+    if(!generateSwaggerDocs) {
+      this.connectToDatabase();
+    }
 
-    this.connectToDatabase();
     this.initializeMiddlewares();
     this.initializeRoutes(routes);
     this.initializeSwagger();
     this.initializeErrorHandling();
+    
   }
 
   public listen() {
     this.server = this.app.listen(this.port, () => {
-      logger.info(`=================================`);
-      logger.info(`======= ENV: ${this.env} =======`);
-      logger.info(`🚀 App listening on the port ${this.port}`);
-      logger.info(`=================================`);
+      logger.info(`ENV: ${this.env}`);
+      logger.info(`App listening on port ${this.port}`);
     });
   }
 
@@ -81,15 +82,21 @@ class App {
   }
 
   private initializeSwagger() {
-    const options = {
+    const options: swaggerJSDoc.Options = {
       swaggerDefinition: {
+        openapi: '3.0.0',
         info: {
           title: 'Informations utilisateurs',
           version: '0.0.1',
           description: 'Résumé des APIs',
         },
+        servers: [
+          {
+            url: `http://localhost:${process.env.PORT}`, // URL de base de l'API
+          },
+        ],
       },
-      apis: ['swagger/users.yaml', 'swagger/informations.yaml'],
+      apis: ['**/swaggerDocs/**/*.js'],
     };
 
     const specs = swaggerJSDoc(options);
