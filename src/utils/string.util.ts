@@ -21,4 +21,11 @@ export class StringUtil {
     }
     return result;
   }
+
+  static addCharacterToEachLine(input: string, character: string): string {
+    return input
+      .split('\n') // Sépare la chaîne en lignes
+      .map(line => character + line) // Ajoute le caractère spécifique à chaque ligne
+      .join('\n'); // Recombine les lignes en une seule chaîne
+  }
 }
