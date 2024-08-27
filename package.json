@@ -19,6 +19,7 @@
     "envalid": "^7.3.1",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
+    "express-validator": "^7.2.0",
     "fs": "0.0.1-security",
     "helmet": "^6.0.1",
     "hpp": "^0.2.3",
@@ -29,7 +30,7 @@
     "path": "^0.12.7",
     "sequelize": "^6.28.0",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^4.6.0",
+    "swagger-ui-express": "^4.6.3",
     "ts-node": "^10.9.2",
     "tsconfig": "^7.0.0",
     "tslib": "^2.4.1",
@@ -72,13 +73,14 @@
     "sequelize-cli": "^6.5.2",
     "supertest": "^6.3.3",
     "ts-jest": "^29.2.3",
-    "tsconfig-paths": "^4.1.2"
+    "tsconfig-paths": "^4.2.0"
   },
   "scripts": {
-    "start": "npm run build && cross-env NODE_ENV=development node -r dotenv/config dist/index.js",
+    "start": "npm run build && cross-env NODE_ENV=development node -r dotenv/config dist/src/index.js",
     "dev": "cross-env NODE_ENV=development nodemon",
     "build": "tsc && npx tsc-alias",
-    "test": "jest"
+    "test": "jest",
+    "generate-docs": "npm run build && node dist/src/generateSwaggerDocs.js"
   },
   "author": "",
   "license": "ISC"
