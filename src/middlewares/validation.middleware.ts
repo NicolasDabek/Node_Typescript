@@ -1,39 +1,48 @@
-import { plainToInstance } from 'class-transformer'
-import { validate, ValidationError } from 'class-validator'
-import { RequestHandler } from 'express'
-import HttpException from '../exceptions/HttpException'
-import CreateDtos from '../dtos/createDtos/index'
+import { plainToInstance } from 'class-transformer';
+import { validate, ValidationError } from 'class-validator';
+import { RequestHandler } from 'express';
+import HttpException from '../exceptions/HttpException';
+import { createDtos, CreateDtoKeys } from '../dtos/index';
 
 const validationMiddleware = (
-  value: string | 'body' | 'query' | 'params' = 'body',
+  value: 'body' | 'query' | 'params' = 'body',
   skipMissingProperties = false,
   whitelist = true,
   forbidNonWhitelisted = true,
 ): RequestHandler => {
-  return (req, res, next) => {
-    const tableName = req.params.model.toString()
-    if (CreateDtos[tableName]) {
-      validate(plainToInstance(CreateDtos[tableName], req[value]), { skipMissingProperties, whitelist, forbidNonWhitelisted })
-        .then((errors: ValidationError[]) => {
-          if (errors.length > 0) {
-            const message = errors.map((error: ValidationError) => Object.values(error.constraints)).join(', ')
-            if (message.includes("must be a Date instance")) {
-              if (req[value][message.split(" ")[0]] == "Invalid Date") {
-                next(new HttpException(400, message))
-              }
-              req[value][message.split(" ")[0]] = new Date(req[value][message.split(" ")[0]])
-              validationMiddleware(value, skipMissingProperties, whitelist, forbidNonWhitelisted)
-              next()
-              return
-            }
-            next(new HttpException(400, message))
-          } else {
-            next()
-          }
-        })
-    }
-    else { next(new HttpException(401, 'There is no DTO for this model')) }
-  }
-}
+  return async (req, res, next) => {
+    const tableName = req.params.model?.toLowerCase() as CreateDtoKeys;
 
-export default validationMiddleware
+    if (createDtos[tableName]) {
+      const dtoInstance = plainToInstance(createDtos[tableName], req[value]);
+      const errors: ValidationError[] = await validate(dtoInstance, { skipMissingProperties, whitelist, forbidNonWhitelisted });
+
+      if (errors.length > 0) {
+        const errorMessages = errors.map((error: ValidationError) => Object.values(error.constraints || {}).join(', ')).join(', ');
+
+        // Handle invalid date error specifically
+        if (errorMessages.includes("must be a Date instance")) {
+          const dateField = errorMessages.split(' ')[0];
+          if (req[value][dateField] === "Invalid Date") {
+            return next(new HttpException(400, `${dateField} is an invalid date`));
+          }
+          req[value][dateField] = new Date(req[value][dateField]);
+          
+          // Re-validate after date correction
+          const reErrors: ValidationError[] = await validate(plainToInstance(createDtos[tableName], req[value]), { skipMissingProperties, whitelist, forbidNonWhitelisted });
+          if (reErrors.length > 0) {
+            const reErrorMessages = reErrors.map((error: ValidationError) => Object.values(error.constraints || {}).join(', ')).join(', ');
+            return next(new HttpException(400, reErrorMessages));
+          }
+        } else {
+          return next(new HttpException(400, errorMessages));
+        }
+      }
+      next();
+    } else {
+      next(new HttpException(401, `No DTO found for model ${tableName}`));
+    }
+  };
+};
+
+export default validationMiddleware;
