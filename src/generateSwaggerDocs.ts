@@ -1,39 +1,40 @@
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { getMetadataStorage } from 'class-validator';
-import { UsersDto } from './dtos/user.dto';
+import { dtos, DtoKeys } from './dtos';
 import BaseRoute from './routes/base.route';
 import App from './app';
-import Route from '@interfaces/routes.interface';
-import { StringUtil } from '@utils/string.util';
+import Route from './interfaces/routes.interface';
+import { StringUtil } from './utils/string.util';
 
-export const appForSwagger = new App([new BaseRoute()], true)
+const allRoutesList = [new BaseRoute()]
+export const appForSwagger = new App(allRoutesList, true);
 const router: Route[] = appForSwagger.routes;
 
 interface RouteForSwagger {
-  method: string,
-  path: string,
-  dto?: typeof UsersDto
+  method: string;
+  path: string;
+  dto?: typeof dtos[DtoKeys];
+  modelName?: keyof typeof dtos;
 }
 
-// Fonction pour lister les routes d'un routeur spécifique
-function listRouterRoutes(routes: Route) {
+function listRouterRoutes(routes: Route): RouteForSwagger[] {
   const routesPushed: RouteForSwagger[] = [];
   routes.router.stack?.forEach((middleware) => {
     if (middleware.route) {
-      console.log("middleware", middleware)
+      const modelName = (middleware.route.path.match(/\/([^\/]+)/) || [])[1]; // Extract model name
       routesPushed.push({
         method: Object.keys(middleware.route["methods"])[0].toUpperCase(),
         path: middleware.route.path,
-        dto: UsersDto
+        dto: dtos[modelName as DtoKeys],
+        modelName: modelName as keyof typeof dtos
       });
     }
   });
   return routesPushed;
 }
 
-// Fonction pour convertir les règles class-validator en spécifications Swagger
-function convertClassValidatorToSwagger(dtoClass) {
+function convertClassValidatorToSwagger(dtoClass): any {
   const swaggerSchema = {
     type: 'object',
     properties: {},
@@ -41,7 +42,6 @@ function convertClassValidatorToSwagger(dtoClass) {
   };
 
   const metadata = getMetadataStorage().getTargetValidationMetadatas(dtoClass, '', false, false);
-
   const groupedMetadata = metadata.reduce((acc, meta) => {
     if (!acc[meta.propertyName]) {
       acc[meta.propertyName] = [];
@@ -83,12 +83,17 @@ function convertClassValidatorToSwagger(dtoClass) {
   return swaggerSchema;
 }
 
-// Générer des fichiers de documentation Swagger en JavaScript
+function replaceModelPlaceholder(path: string, modelName: string): string {
+  return path.replace('/:model', `/${modelName}`);
+}
+
 function generateSwaggerFiles(routes: Route[]) {
   routes.forEach((currentRoute) => {
+    // lancé une fois par fichier de route
+    console.log("currentRoute.stack", currentRoute["stack"])
     const resultListRoutes = listRouterRoutes(currentRoute);
-    console.log("routes", routes)
     resultListRoutes.forEach((currentRouteForSwagger, index) => {
+      // lancé autant de fois qu'il y a de routes définies dans un fichier de route
       let parameters = '';
 
       if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(currentRouteForSwagger.method) && currentRouteForSwagger.dto) {
@@ -96,12 +101,14 @@ function generateSwaggerFiles(routes: Route[]) {
         parameters = `requestBody:\n *       content:\n *         application/json:\n *           schema:\n${StringUtil.addCharacterToEachLine(JSON.stringify(swaggerSchema, null, 2), '\u00A0*')}`;
       }
 
+      const pathWithModel = currentRouteForSwagger.modelName ? replaceModelPlaceholder(currentRouteForSwagger.path, currentRouteForSwagger.modelName) : currentRouteForSwagger.path;
+
       const docContent = `
 /**
  * @swagger
- * /${currentRouteForSwagger.path}:
+ * ${pathWithModel}:
  *   ${currentRouteForSwagger.method.toLowerCase()}:
- *     summary: ${currentRouteForSwagger.method} ${currentRouteForSwagger.path}
+ *     summary: ${currentRouteForSwagger.method} ${pathWithModel}
  *     ${parameters}
  *     responses:
  *       200:
@@ -109,20 +116,16 @@ function generateSwaggerFiles(routes: Route[]) {
  */
     `;
 
-      // Écrire le fichier dans le dossier swaggerDocs
       const filePath = join(__dirname, '../swaggerDocs', `route${index + 1}.js`);
       writeFileSync(filePath, docContent, 'utf8');
     });
-  })
-
+  });
 }
 
-// Assurez-vous que le dossier swaggerDocs existe
 if (!existsSync(join(__dirname, '../swaggerDocs'))) {
   mkdirSync(join(__dirname, '../swaggerDocs'));
 }
 
-// Générer les fichiers
 generateSwaggerFiles(router);
 
 console.log('Swagger documentation generated successfully.');
