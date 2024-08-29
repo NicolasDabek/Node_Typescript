@@ -10,6 +10,7 @@ import { StringUtil } from './utils/string.util';
 const allRoutesList = [new BaseRoute()]
 export const appForSwagger = new App(allRoutesList, true);
 const router: Route[] = appForSwagger.routes;
+const SWAGGER_DOCS_PATH = join(__dirname, '../../swaggerDocs');
 
 interface RouteForSwagger {
   method: string;
@@ -137,14 +138,14 @@ function generateSwaggerFiles(routes: Route[]) {
 
   // Écrire les fichiers dans le dossier swaggerDocs
   modelRoutes.forEach((contents, modelName) => {
-    const filePath = join(__dirname, '../swaggerDocs', `${modelName}.js`);
+    const filePath = join(SWAGGER_DOCS_PATH, `${modelName}.js`);
     writeFileSync(filePath, contents.join('\n'), 'utf8');
   });
 }
 
 // Assurez-vous que le dossier swaggerDocs existe
-if (!existsSync(join(__dirname, '../swaggerDocs'))) {
-  mkdirSync(join(__dirname, '../swaggerDocs'));
+if (!existsSync(SWAGGER_DOCS_PATH)) {
+  mkdirSync(SWAGGER_DOCS_PATH);
 }
 
 // Générer les fichiers
