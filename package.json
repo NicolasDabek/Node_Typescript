@@ -28,6 +28,7 @@
     "mysql2": "^3.0.1",
     "nodemailer": "^6.9.14",
     "path": "^0.12.7",
+    "reflect-metadata": "^0.2.2",
     "sequelize": "^6.28.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^4.6.3",
@@ -80,7 +81,7 @@
     "dev": "cross-env NODE_ENV=development nodemon",
     "build": "tsc && npx tsc-alias",
     "test": "jest",
-    "generate-docs": "npm run build && node dist/src/generateSwaggerDocs.js"
+    "generate-docs": "npm run build && node dist/src/swagger/generateSwaggerDocs.js"
   },
   "author": "",
   "license": "ISC"
