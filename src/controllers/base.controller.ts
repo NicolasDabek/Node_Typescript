@@ -11,7 +11,7 @@ class BaseController {
       const tableName = req.params.model.toString()
       const findAllDatas: Model[] = await BaseController.baseService.findAllDatas(tableName)
 
-      res.status(200).json({ datas: findAllDatas, message: 'findAll' })
+      res.status(200).json({ datas: findAllDatas, message: 'findAll dans getAllDatas' })
     } catch (error) {
       next(error)
     }
@@ -37,7 +37,7 @@ class BaseController {
       const fieldName = req.params.fieldName.toString()
       const findAllDatas: Model[] = await BaseController.baseService.findAllDatasOneField(tableName, fieldName)
 
-      res.status(200).json({ datas: findAllDatas, message: 'findAll' })
+      res.status(200).json({ datas: findAllDatas, message: 'findAllDataOneField' })
     }
     catch (error) { next(error) }
   }

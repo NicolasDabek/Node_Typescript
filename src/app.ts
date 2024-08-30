@@ -14,6 +14,7 @@ import { logger, stream } from './utils/logger.util';
 import csurf from "csurf"
 import session from "express-session"
 import { Server } from 'http';
+import { generateSwaggerDocs } from './swagger/generateSwaggerDocs';
 
 class App {
   public app: express.Application;
@@ -85,25 +86,7 @@ class App {
   }
 
   private initializeSwagger() {
-    const options: swaggerJSDoc.Options = {
-      swaggerDefinition: {
-        openapi: '3.0.0',
-        info: {
-          title: 'Informations utilisateurs',
-          version: '0.0.1',
-          description: 'Résumé des APIs',
-        },
-        servers: [
-          {
-            url: `http://localhost:${process.env.PORT}`, // URL de base de l'API
-          },
-        ],
-      },
-      apis: ['../swaggerDocs/**/*.js'],
-    };
-
-    const specs = swaggerJSDoc(options);
-    this.app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+    this.app.use('/swagger/api-docs', swaggerUi.serve, swaggerUi.setup(generateSwaggerDocs()));
   }
 
   private initializeErrorHandling() {

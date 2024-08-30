@@ -1,5 +1,5 @@
 import { UsersDto } from './user.dto';
-import { CreateUsersDto } from './createDtos/users.dto';
+import { CreateUsersDto } from './createDtos/user.dto';
 
 export const dtos = {
   users: UsersDto
