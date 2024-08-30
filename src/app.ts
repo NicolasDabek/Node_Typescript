@@ -14,7 +14,8 @@ import { logger, stream } from './utils/logger.util';
 import csurf from "csurf"
 import session from "express-session"
 import { Server } from 'http';
-import { generateSwaggerDocs } from './swagger/generateSwaggerDocs';
+import path from 'path';
+import fs from "fs"
 
 class App {
   public app: express.Application;
@@ -86,7 +87,14 @@ class App {
   }
 
   private initializeSwagger() {
-    this.app.use('/swagger/api-docs', swaggerUi.serve, swaggerUi.setup(generateSwaggerDocs()));
+    const swaggerPath = path.resolve(__dirname, 'swaggerDocs', 'swagger-docs.json');
+    
+    if (fs.existsSync(swaggerPath)) {
+      const swaggerDoc = JSON.parse(fs.readFileSync(swaggerPath, 'utf8'));
+      this.app.use('/swagger/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+    } else {
+      logger.error('Swagger document not found. Please ensure the file exists at the specified path.');
+    }
   }
 
   private initializeErrorHandling() {

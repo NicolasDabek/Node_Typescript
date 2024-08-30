@@ -20,4 +20,4 @@ export function writeSwaggerDocs(swaggerDoc: SwaggerDoc) {
 
 writeSwaggerDocs(generateSwaggerDocs())
 
-console.log("SwaggerDocs generated!")
+console.log("Swagger documentation generated and saved to file!");
