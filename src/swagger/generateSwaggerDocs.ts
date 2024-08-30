@@ -5,10 +5,13 @@ import { SwaggerGeneratorService } from './services/swaggerGenerator.service';
 import { FileWriterService } from './services/fileWriter.service';
 import { routes } from '../routes';
 import { SwaggerDoc } from './interfaces/swaggerDoc.interface';
+import { ParametersBuilder } from './builders/parameters.builder';
 
 export function generateSwaggerDocs() {
   const routesForSwagger = RouteScannerService.scanRoutes(routes);
-  const swaggerDoc = SwaggerGeneratorService.generateSwagger(routesForSwagger);
+
+  let swaggerDoc = SwaggerGeneratorService.generateSwagger(routesForSwagger);
+  swaggerDoc = ParametersBuilder.addParametersToRoutes(swaggerDoc)
 
   return swaggerDoc;
 }

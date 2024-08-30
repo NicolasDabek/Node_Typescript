@@ -1,4 +1,4 @@
-// /src/builders/components.interface.ts
+// /src/builders/components.builder.ts
 
 import { SwaggerDoc } from '../interfaces/swaggerDoc.interface';
 import { SchemaBuilder } from './schema.builder';
