@@ -6,8 +6,9 @@ import { FileWriterService } from './services/fileWriter.service';
 import { routes } from '../routes';
 import { SwaggerDoc } from './interfaces/swaggerDoc.interface';
 import { ParametersBuilder } from './builders/parameters.builder';
+import Route from '../interfaces/routes.interface';
 
-export function generateSwaggerDocs() {
+export function generateSwaggerDocs(routes: Route[]) {
   const routesForSwagger = RouteScannerService.scanRoutes(routes);
 
   let swaggerDoc = SwaggerGeneratorService.generateSwagger(routesForSwagger);
@@ -21,6 +22,6 @@ export function writeSwaggerDocs(swaggerDoc: SwaggerDoc) {
 }
 
 
-writeSwaggerDocs(generateSwaggerDocs())
+writeSwaggerDocs(generateSwaggerDocs(routes))
 
 console.log("Swagger documentation generated and saved to file!");
