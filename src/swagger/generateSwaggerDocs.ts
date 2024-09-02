@@ -8,7 +8,7 @@ import { SwaggerDoc } from './interfaces/swaggerDoc.interface';
 import { ParametersBuilder } from './builders/parameters.builder';
 import Route from '../interfaces/routes.interface';
 
-export function generateSwaggerDocs(routes: Route[]) {
+export function generateSwaggerDocs(routes: Route[]) : SwaggerDoc {
   const routesForSwagger = RouteScannerService.scanRoutes(routes);
 
   let swaggerDoc = SwaggerGeneratorService.generateSwagger(routesForSwagger);
@@ -17,7 +17,7 @@ export function generateSwaggerDocs(routes: Route[]) {
   return swaggerDoc;
 }
 
-export function writeSwaggerDocs(swaggerDoc: SwaggerDoc) {
+export function writeSwaggerDocs(swaggerDoc: SwaggerDoc) : void {
   FileWriterService.writeFile('swagger-docs.json', swaggerDoc);
 }
 
