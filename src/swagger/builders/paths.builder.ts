@@ -1,7 +1,7 @@
 // /src/builders/paths.builder.ts
 
 import { DtoKeys, dtos, createDtos } from '../../dtos';
-import { convertDtoToSchema } from '../convertDtoToSchema';
+import { convertDtoToSchema } from '../services/convertDtoToSchema';
 import { RouteForSwagger } from '../interfaces/routeForSwagger.interface';
 
 export class PathsBuilder {
