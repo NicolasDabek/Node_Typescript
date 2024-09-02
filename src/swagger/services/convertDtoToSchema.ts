@@ -1,4 +1,4 @@
-// /src/swagger/convertDtoToSchema.ts
+// /src/swagger/services/convertDtoToSchema.ts
 
 import { SchemaObject } from '../interfaces/schemaObject.interface';
 import { getMetadataStorage } from 'class-validator';
