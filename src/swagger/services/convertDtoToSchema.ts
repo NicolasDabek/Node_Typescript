@@ -1,6 +1,6 @@
 // /src/swagger/convertDtoToSchema.ts
 
-import { SchemaObject } from './interfaces/schemaObject.interface';
+import { SchemaObject } from '../interfaces/schemaObject.interface';
 import { getMetadataStorage } from 'class-validator';
 
 export function convertDtoToSchema(dtoClass: any): SchemaObject {
