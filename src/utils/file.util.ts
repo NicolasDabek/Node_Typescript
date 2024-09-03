@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import path from 'path';
 
 export class FileUtil {
   private filePath: string;
@@ -100,6 +101,49 @@ export class FileUtil {
         }
       });
     });
+  }
+
+  /**
+   * Lit le contenu d'un dossier et des sous dossier.
+   * @param {string} dirPath - Le chemin du dossier à lire.
+   * @returns {Promise<string[]>} Les fichiers, dossiers et sous-dossier dans le dossier.
+   */
+  public static async readDirectoryAndSubDirectory(dirPath: string): Promise<Record<string, any>> {
+    const directoriesAndFiles: Record<string, {}> = {};
+
+    // Fonction récursive pour lire les fichiers et les sous-dossiers
+    const readFileOrSubDirectory = async (currentPath: string, result: Record<string, {}>) => {
+      try {
+        const files = await fs.promises.readdir(currentPath);
+
+        for (const fileOrFolder of files) {
+          const fullPath = path.join(currentPath, fileOrFolder);
+          const stats = await fs.promises.stat(fullPath);
+
+          if (stats.isDirectory()) {
+            // Créez un objet pour le sous-dossier et le rajoutez au résultat
+            const subDirectory: Record<string, {}> = {};
+            result[fileOrFolder] = subDirectory;
+
+            // Appelez récursivement la fonction pour traiter le sous-dossier
+            await readFileOrSubDirectory(fullPath, subDirectory);
+          } else if (stats.isFile()) {
+            // Ajoutez le chemin complet du fichier sous le répertoire courant
+            if (!result['files']) {
+              result['files'] = [];
+            }
+            (result['files'] as string[]).push(fullPath);
+          }
+        }
+      } catch (err) {
+        console.error(`Erreur lors de la lecture de ${currentPath}: ${err.message}`);
+      }
+    };
+
+    // Commencez la lecture à partir du répertoire racine
+    await readFileOrSubDirectory(dirPath, directoriesAndFiles);
+
+    return directoriesAndFiles;
   }
 
   /**
