@@ -9,32 +9,41 @@ export class PathsBuilder {
     const { method, path, modelName, dto } = route;
 
     if (modelName && dto) {
-      const lowerMethod = method.toLowerCase();
-      const dtoKey = modelName as DtoKeys;
+        const lowerMethod = method.toLowerCase();
+        const dtoKey = modelName as DtoKeys;
 
-      if (!swaggerDoc.paths[path]) {
-        swaggerDoc.paths[path] = {};
-      }
+        // Vérifie si le modèle n'a pas déjà été ajouté
+        if (!swaggerDoc.paths[modelName]) {
+            swaggerDoc.paths[modelName] = {};
+        }
 
-      switch (lowerMethod) {
-        case 'get':
-          swaggerDoc.paths[path][lowerMethod] = this.buildGetPath(modelName);
-          break;
-        case 'post':
-        case 'put':
-        case 'patch':
-          swaggerDoc.paths[path][lowerMethod] = this.buildMutationPath(modelName, lowerMethod);
-          break;
-        case 'delete':
-          swaggerDoc.paths[path][lowerMethod] = this.buildDeletePath(modelName);
-          break;
-      }
+        // Vérifie si le chemin n'a pas déjà été ajouté sous le modèle
+        if (!swaggerDoc.paths[modelName][path]) {
+            swaggerDoc.paths[modelName][path] = {};
+        }
 
-      swaggerDoc.components.schemas = swaggerDoc.components.schemas || {};
-      swaggerDoc.components.schemas[`${modelName}`] = convertDtoToSchema(dtos[dtoKey]);
-      swaggerDoc.components.schemas[`${modelName}Create`] = convertDtoToSchema(createDtos[dtoKey]);
+        // Construire le path selon la méthode
+        switch (lowerMethod) {
+            case 'get':
+                swaggerDoc.paths[modelName][path][lowerMethod] = this.buildGetPath(modelName);
+                break;
+            case 'post':
+            case 'put':
+            case 'patch':
+                swaggerDoc.paths[modelName][path][lowerMethod] = this.buildMutationPath(modelName, lowerMethod);
+                break;
+            case 'delete':
+                swaggerDoc.paths[modelName][path][lowerMethod] = this.buildDeletePath(modelName);
+                break;
+        }
+
+        // Ajoute les schémas nécessaires
+        swaggerDoc.components.schemas = swaggerDoc.components.schemas || {};
+        swaggerDoc.components.schemas[`${modelName}`] = convertDtoToSchema(dtos[dtoKey]);
+        swaggerDoc.components.schemas[`${modelName}Create`] = convertDtoToSchema(createDtos[dtoKey]);
     }
-  }
+}
+
 
   private static buildGetPath(modelName: string): Record<string, any> {
     return {

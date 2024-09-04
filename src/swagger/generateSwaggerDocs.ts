@@ -17,10 +17,24 @@ export function generateSwaggerDocs(routes: Route[]) : SwaggerDoc {
   return swaggerDoc;
 }
 
-export function writeSwaggerDocs(swaggerDoc: SwaggerDoc) : void {
-  FileWriterService.writeFile('swagger-docs.json', swaggerDoc);
-}
+export function writeSwaggerDocs(swaggerDoc: SwaggerDoc): void {
+  const baseDoc = {
+      openapi: swaggerDoc.openapi,
+      info: swaggerDoc.info,
+      components: swaggerDoc.components
+  };
 
+  for (const modelName in swaggerDoc.paths) {
+      if (swaggerDoc.paths.hasOwnProperty(modelName)) {
+          const modelDoc = { ...baseDoc, paths: {} };
+          modelDoc.paths = swaggerDoc.paths[modelName];
+
+          // Ecrire chaque fichier pour chaque modèle
+          const fileName = `swagger-${modelName}.json`;
+          FileWriterService.writeFile(fileName, modelDoc);
+      }
+  }
+}
 
 writeSwaggerDocs(generateSwaggerDocs(routes))
 
