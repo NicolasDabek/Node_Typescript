@@ -1,4 +1,4 @@
-import { plainToInstance } from 'class-transformer';
+import { plainToInstance, ClassConstructor } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
 import { RequestHandler } from 'express';
 import HttpException from '../exceptions/HttpException';
@@ -14,22 +14,21 @@ const validationMiddleware = (
     const tableName = req.params.model?.toLowerCase() as CreateDtoKeys;
 
     if (createDtos[tableName]) {
-      const dtoInstance = plainToInstance(createDtos[tableName], req[value]);
+      const dtoClass = createDtos[tableName] as ClassConstructor<any>;
+      const dtoInstance = plainToInstance(dtoClass, req[value]);
       const errors: ValidationError[] = await validate(dtoInstance, { skipMissingProperties, whitelist, forbidNonWhitelisted });
 
       if (errors.length > 0) {
         const errorMessages = errors.map((error: ValidationError) => Object.values(error.constraints || {}).join(', ')).join(', ');
 
-        // Handle invalid date error specifically
         if (errorMessages.includes("must be a Date instance")) {
           const dateField = errorMessages.split(' ')[0];
           if (req[value][dateField] === "Invalid Date") {
             return next(new HttpException(400, `${dateField} is an invalid date`));
           }
           req[value][dateField] = new Date(req[value][dateField]);
-          
-          // Re-validate after date correction
-          const reErrors: ValidationError[] = await validate(plainToInstance(createDtos[tableName], req[value]), { skipMissingProperties, whitelist, forbidNonWhitelisted });
+
+          const reErrors: ValidationError[] = await validate(plainToInstance(dtoClass, req[value]), { skipMissingProperties, whitelist, forbidNonWhitelisted });
           if (reErrors.length > 0) {
             const reErrorMessages = reErrors.map((error: ValidationError) => Object.values(error.constraints || {}).join(', ')).join(', ');
             return next(new HttpException(400, reErrorMessages));
