@@ -16,6 +16,7 @@ import session from "express-session"
 import { Server } from 'http';
 import path from 'path';
 import fs from "fs"
+import { SwaggerDoc } from './swagger/interfaces/swaggerDoc.interface';
 
 class App {
   public app: express.Application;
@@ -87,15 +88,37 @@ class App {
   }
 
   private initializeSwagger() {
-    const swaggerPath = path.resolve(__dirname, 'swaggerDocs', 'swagger-docs.json');
-    
-    if (fs.existsSync(swaggerPath)) {
-      const swaggerDoc = JSON.parse(fs.readFileSync(swaggerPath, 'utf8'));
-      this.app.use('/swagger/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+    const swaggerDocsDir = path.resolve(__dirname, 'swaggerDocs');
+    const swaggerDoc: SwaggerDoc = {
+        openapi: '3.0.0',
+        info: { title: 'My API', version: '1.0.0' },
+        paths: {},
+        components: { schemas: {} },
+    };
+
+    // Vérifier si le dossier existe
+    if (fs.existsSync(swaggerDocsDir)) {
+        const files = fs.readdirSync(swaggerDocsDir);
+        
+        // Boucle sur tous les fichiers JSON dans le dossier swaggerDocs
+        files.forEach(file => {
+            if (file.endsWith('.json')) {
+                const modelDocPath = path.join(swaggerDocsDir, file);
+                const modelDoc = JSON.parse(fs.readFileSync(modelDocPath, 'utf8'));
+
+                // Combiner les paths et components des modèles dans un seul objet
+                swaggerDoc.paths = { ...swaggerDoc.paths, ...modelDoc.paths };
+                swaggerDoc.components.schemas = { ...swaggerDoc.components.schemas, ...modelDoc.components.schemas };
+            }
+        });
+
+        // Configuration de Swagger UI avec le document combiné
+        this.app.use('/swagger/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
     } else {
-      logger.error('Swagger document not found. Please ensure the file exists at the specified path.');
+        logger.error('Swagger documentation directory not found. Please ensure the directory exists.');
     }
-  }
+}
+
 
   private initializeErrorHandling() {
     this.app.use(errorMiddleware);
