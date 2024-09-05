@@ -1,17 +1,18 @@
-import { UsersDto } from './user.dto';
-import { CreateUsersDto } from './createDtos/user.dto';
+import { ProductsDto } from './products.dto';
+import { UsersDto } from './users.dto';
 
-import { ProductsDto } from './product.dto';
-import { CreateProductsDto } from './createDtos/product.dto';
+import { CreateProductsDto } from './createDtos/products.dto';
+import { CreateUsersDto } from './createDtos/users.dto';
+
 
 export const dtos = {
-  users: UsersDto,
-  products: ProductsDto
+  products: ProductsDto,
+  users: UsersDto
 };
 
 export const createDtos = {
-  users: CreateUsersDto,
-  products: CreateProductsDto
+  products: CreateProductsDto,
+  users: CreateUsersDto
 };
 
 export type DtoKeys = keyof typeof dtos;
