@@ -4,7 +4,6 @@ import { UsersDto } from './users.dto';
 import { CreateProductsDto } from './createDtos/products.dto';
 import { CreateUsersDto } from './createDtos/users.dto';
 
-
 export const dtos = {
   products: ProductsDto,
   users: UsersDto

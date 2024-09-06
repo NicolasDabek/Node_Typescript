@@ -1,6 +1,5 @@
-
-import { IsString, IsEmail, IsNumber, IsDate, IsBoolean } from 'class-validator';
 import { BaseDto } from './base.dto';
+import { IsString, IsNumber } from 'class-validator';
 
 export class ProductsDto extends BaseDto {
   @IsString()

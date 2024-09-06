@@ -1,6 +1,5 @@
-
-import { IsString, IsEmail, IsNumber, IsDate, IsBoolean } from 'class-validator';
 import { BaseDto } from './base.dto';
+import { IsString, IsBoolean, IsDate } from 'class-validator';
 
 export class UsersDto extends BaseDto {
   @IsString()
@@ -20,6 +19,4 @@ export class UsersDto extends BaseDto {
 
   @IsDate()
   public dateCreation: Date;
-
-
 }
