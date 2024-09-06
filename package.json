@@ -82,7 +82,7 @@
     "dev": "cross-env NODE_ENV=development nodemon",
     "build": "tsc && npx tsc-alias",
     "test": "jest",
-    "generate-models": "node generateModels.js",
+    "generate-models": "npx ts-node generateModels.ts",
     "generate-dtos": "npx ts-node generateDtos.ts",
     "generate-docs": "npm run build && node dist/src/swagger/generateSwaggerDocs.js"
   },
