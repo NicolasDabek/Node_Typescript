@@ -3,6 +3,8 @@ import path from 'path';
 import DB from './src/databases';
 
 const configPath = path.resolve(__dirname, './generateDtos.config.json');
+const outputDir = path.resolve(__dirname, './src/dtos');
+const createDtoDir = path.join(outputDir, 'createDtos');
 
 async function loadConfig() {
   try {
@@ -23,27 +25,24 @@ async function ensureDirectoryExists(dirPath: string) {
 }
 
 async function generateDtoFiles(models: any, config: any) {
-  const outputDir = path.resolve(__dirname, './src/dtos');
-  const createDtoDir = path.join(outputDir, 'createDtos');
-
   await ensureDirectoryExists(outputDir);
   await ensureDirectoryExists(createDtoDir);
-  
-// Fonction pour générer les imports à partir des validators utilisés
-const generateImports = (validators: Set<string>) => {
-  return validators.size > 0 ? `import { ${[...validators].join(', ')} } from 'class-validator';\n` : '';
-};
 
-// Template pour CreateDTO
-const createDtoTemplate = (className: string, fields: string, validators: Set<string>) =>
-`${generateImports(validators)}
+  // Fonction pour générer les imports à partir des validators utilisés
+  const generateImports = (validators: Set<string>) => {
+    return validators.size > 0 ? `import { ${[...validators].join(', ')} } from 'class-validator';\n` : '';
+  };
+
+  // Template pour CreateDTO
+  const createDtoTemplate = (className: string, fields: string, validators: Set<string>) =>
+    `${generateImports(validators)}
 export class Create${className}Dto {
 ${fields}
 }`;
-  
+
   // Template pour le DTO normal
-  const dtoTemplate = (className: string, fields: string, validators: Set<string>) => 
-`import { BaseDto } from './base.dto';
+  const dtoTemplate = (className: string, fields: string, validators: Set<string>) =>
+    `import { BaseDto } from './base.dto';
 ${generateImports(validators)}
 export class ${className}Dto extends BaseDto {
 ${fields}
@@ -125,11 +124,55 @@ ${fields}
   }
 }
 
+const updateIndexFile = async () => {
+  try {
+    const dtoFiles = (await fs.readdir(outputDir)).filter(file => file.endsWith('.dto.ts'));
+    const createDtoFiles = (await fs.readdir(createDtoDir)).filter(file => file.endsWith('.dto.ts'));
+
+    let dtoExports = '';
+    let createDtoExports = '';
+
+    dtoFiles.forEach(file => {
+      const dtoName = path.basename(file, '.dto.ts');
+      const className = dtoName.charAt(0).toUpperCase() + dtoName.slice(1);
+      dtoExports += `import { ${className}Dto } from './${dtoName}.dto';\n`;
+    });
+
+    createDtoFiles.forEach(file => {
+      const dtoName = path.basename(file, '.dto.ts');
+      const className = dtoName.charAt(0).toUpperCase() + dtoName.slice(1);
+      createDtoExports += `import { Create${className}Dto } from './createDtos/${dtoName}.dto';\n`;
+    });
+
+    const indexFileContent =
+`${dtoExports}\n${createDtoExports}
+export const dtos = {
+${dtoFiles.map(file => `  ${path.basename(file, '.dto.ts')}: ${path.basename(file, '.dto.ts').charAt(0).toUpperCase() + path.basename(file, '.dto.ts').slice(1)}Dto`).join(',\n')}
+};
+
+export const createDtos = {
+${createDtoFiles.map(file => `  ${path.basename(file, '.dto.ts')}: Create${path.basename(file, '.dto.ts').charAt(0).toUpperCase() + path.basename(file, '.dto.ts').slice(1)}Dto`).join(',\n')}
+};
+
+export type DtoKeys = keyof typeof dtos;
+export type DtoValues = typeof dtos[DtoKeys];
+
+export type CreateDtoKeys = keyof typeof createDtos;
+export type CreateDtoValues = typeof createDtos[CreateDtoKeys];`;
+
+    await fs.writeFile(path.join(outputDir, 'index.ts'), indexFileContent);
+    console.log(`Index généré : ${path.join(outputDir, 'index.ts')}`);
+  } catch (error) {
+    console.error('Erreur lors de la génération du fichier d\'index:', error);
+  }
+};
+
 (async () => {
   try {
     const config = await loadConfig();
     const models = DB.Models;
     await generateDtoFiles(models, config);
+    await updateIndexFile();
   } catch (error) {
     console.error('Erreur lors de la génération des DTOs:', error);
   }
