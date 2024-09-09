@@ -4,6 +4,7 @@ import DB from './src/databases';
 
 const configPath = path.resolve(__dirname, './generateDtos.config.json');
 const outputDir = path.resolve(__dirname, './src/dtos');
+const baseDtoPath = path.join(outputDir, '/base.dto.ts')
 const createDtoDir = path.join(outputDir, 'createDtos');
 
 async function loadConfig() {
@@ -124,6 +125,22 @@ ${fields}
   }
 }
 
+const generateBaseDto = async () => {
+  const baseDtoContent = `import { IsNumber } from 'class-validator';
+
+export class BaseDto {
+  @IsNumber()
+  public id: number;
+}`;
+
+  try {
+    await fs.writeFile(baseDtoPath, baseDtoContent);
+    console.log(`Base DTO généré : ${baseDtoPath}`);
+  } catch (error) {
+    console.error('Erreur lors de la génération du BaseDto:', error);
+  }
+};
+
 const updateIndexFile = async () => {
   try {
     const dtoFiles = (await fs.readdir(outputDir)).filter(file => file.endsWith('.dto.ts'));
@@ -172,6 +189,7 @@ export type CreateDtoValues = typeof createDtos[CreateDtoKeys];`;
     const config = await loadConfig();
     const models = DB.Models;
     await generateDtoFiles(models, config);
+    await generateBaseDto();
     await updateIndexFile();
   } catch (error) {
     console.error('Erreur lors de la génération des DTOs:', error);
