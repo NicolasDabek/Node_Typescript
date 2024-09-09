@@ -1,52 +1,34 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
-import DB from './src/databases'; // TypeScript import
+import DB from './src/databases';
 
-// Charger la configuration
 const configPath = path.resolve(__dirname, './generateDtos.config.json');
-const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
-// Fonction pour s'assurer que les répertoires existent
-const ensureDirectoryExists = (dir: string) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+async function loadConfig() {
+  try {
+    const configContent = await fs.readFile(configPath, 'utf-8');
+    return JSON.parse(configContent);
+  } catch (error) {
+    console.error('Erreur lors du chargement de la configuration:', error);
+    throw error;
   }
-};
+}
 
-// Répertoires pour les DTOs
-const outputDir = path.resolve(__dirname, './src/dtos');
-const createDtoDir = path.join(outputDir, 'createDtos');
-
-// Assurer que les répertoires pour les DTOs existent
-ensureDirectoryExists(outputDir);
-ensureDirectoryExists(createDtoDir);
-
-const models = DB.Models;
-
-// Fonction pour obtenir le type et le validateur
-const getTypeAndValidator = (attribute: any): { tsType: string, validator: string } => {
-  switch (attribute.type.constructor.name) {
-    case 'STRING':
-    case 'TEXT':
-      return { tsType: 'string', validator: '@IsString()' };
-    case 'INTEGER':
-    case 'BIGINT':
-    case 'FLOAT':
-    case 'DOUBLE':
-    case 'DECIMAL':
-      return { tsType: 'number', validator: '@IsNumber()' };
-    case 'BOOLEAN':
-      return { tsType: 'boolean', validator: '@IsBoolean()' };
-    case 'DATE':
-    case 'DATEONLY':
-      return { tsType: 'Date', validator: '@IsDate()' };
-    case 'EMAIL':
-      return { tsType: 'string', validator: '@IsEmail()' };
-    default:
-      return { tsType: 'any', validator: '@IsOptional()' };
+async function ensureDirectoryExists(dirPath: string) {
+  try {
+    await fs.mkdir(dirPath, { recursive: true });
+  } catch (error) {
+    console.error(`Erreur lors de la création du dossier ${dirPath}:`, error);
   }
-};
+}
 
+async function generateDtoFiles(models: any, config: any) {
+  const outputDir = path.resolve(__dirname, './src/dtos');
+  const createDtoDir = path.join(outputDir, 'createDtos');
+
+  await ensureDirectoryExists(outputDir);
+  await ensureDirectoryExists(createDtoDir);
+  
 // Fonction pour générer les imports à partir des validators utilisés
 const generateImports = (validators: Set<string>) => {
   return validators.size > 0 ? `import { ${[...validators].join(', ')} } from 'class-validator';\n` : '';
@@ -58,118 +40,97 @@ const createDtoTemplate = (className: string, fields: string, validators: Set<st
 export class Create${className}Dto {
 ${fields}
 }`;
-
-// Template pour le DTO normal
-const dtoTemplate = (className: string, fields: string, validators: Set<string>) => 
+  
+  // Template pour le DTO normal
+  const dtoTemplate = (className: string, fields: string, validators: Set<string>) => 
 `import { BaseDto } from './base.dto';
 ${generateImports(validators)}
 export class ${className}Dto extends BaseDto {
 ${fields}
 }`;
+  for (const modelName in models) {
+    if (models.hasOwnProperty(modelName)) {
+      const model = models[modelName];
+      let dtoFields = '';
+      let createDtoFields = '';
 
-// Générer les fichiers DTO
-for (const modelName in models) {
-  if (models.hasOwnProperty(modelName)) {
-    const model = models[modelName];
-    
-    // Préparation des champs pour les DTOs
-    let dtoFields = '';
-    let createDtoFields = '';
+      const attributes = model.rawAttributes;
+      const primaryKeys = new Set(
+        Object.keys(attributes).filter(key => attributes[key].primaryKey)
+      );
 
-    const attributes = model.rawAttributes;
-    const primaryKeys = new Set(
-      Object.keys(attributes).filter(key => attributes[key].primaryKey)
-    );
+      const dtoValidators = new Set<string>();
+      const createDtoValidators = new Set<string>();
 
-    // Objets pour suivre les validators utilisés
-    const dtoValidators = new Set<string>();
-    const createDtoValidators = new Set<string>();
+      Object.keys(attributes).forEach((attributeName) => {
+        const attribute = attributes[attributeName];
+        let tsType = 'any';
+        let validator = '@IsString()';
 
-    Object.keys(attributes).forEach((attributeName) => {
-      const attribute = attributes[attributeName];
-      const { tsType, validator } = getTypeAndValidator(attribute);
-
-      // Ajout des champs pour les DTOs selon la config
-      if (config.includePrimaryKeys || !primaryKeys.has(attributeName)) {
-        dtoFields += `  ${validator}\n  public ${attributeName}: ${tsType};\n\n`;
-
-        // N'ajouter que les validateurs des attributs qui ne sont pas des clés primaires dans CreateDTOs
-        if (!primaryKeys.has(attributeName)) {
-          createDtoFields += `  ${validator}\n  public ${attributeName}: ${tsType};\n\n`;
-          
-          // Ajouter le validateur uniquement s'il n'est pas une clé primaire
-          createDtoValidators.add(validator.replace(/[@()]/g, ''));
+        switch (attribute.type.constructor.name) {
+          case 'STRING':
+          case 'TEXT':
+            tsType = 'string';
+            validator = '@IsString()';
+            break;
+          case 'INTEGER':
+          case 'BIGINT':
+          case 'FLOAT':
+          case 'DOUBLE':
+          case 'DECIMAL':
+            tsType = 'number';
+            validator = '@IsNumber()';
+            break;
+          case 'BOOLEAN':
+            tsType = 'boolean';
+            validator = '@IsBoolean()';
+            break;
+          case 'DATE':
+          case 'DATEONLY':
+            tsType = 'Date';
+            validator = '@IsDate()';
+            break;
+          case 'EMAIL':
+            tsType = 'string';
+            validator = '@IsEmail()';
+            break;
+          default:
+            tsType = 'any';
+            break;
         }
 
-        // Ajouter le validateur uniquement pour les champs non clés primaires dans DTO
-        dtoValidators.add(validator.replace(/[@()]/g, ''));
-      }
-    });
+        if (config.includePrimaryKeys || !primaryKeys.has(attributeName)) {
+          dtoFields += `  ${validator}\n  public ${attributeName}: ${tsType};\n\n`;
 
-    // Supprimer les derniers \n\n pour éviter les espaces superflus
-    dtoFields = dtoFields.trimEnd();
-    createDtoFields = createDtoFields.trimEnd();
+          if (!primaryKeys.has(attributeName)) {
+            createDtoFields += `  ${validator}\n  public ${attributeName}: ${tsType};\n\n`;
+            createDtoValidators.add(validator.replace(/[@()]/g, ''));
+          }
 
-    // Nom de la classe DTO
-    const className = modelName.charAt(0).toUpperCase() + modelName.slice(1);
+          dtoValidators.add(validator.replace(/[@()]/g, ''));
+        }
+      });
 
-    // Génération des fichiers DTO
-    const dtoFilePath = path.join(outputDir, `${modelName}.dto.ts`);
-    const createDtoFilePath = path.join(createDtoDir, `${modelName}.dto.ts`);
+      dtoFields = dtoFields.trimEnd();
+      createDtoFields = createDtoFields.trimEnd();
 
-    fs.writeFileSync(dtoFilePath, dtoTemplate(className, dtoFields, dtoValidators));
-    if (config.verbose) {
-      console.log(`DTO généré : ${dtoFilePath}`);
-    }
+      const className = modelName.charAt(0).toUpperCase() + modelName.slice(1);
 
-    fs.writeFileSync(createDtoFilePath, createDtoTemplate(className, createDtoFields, createDtoValidators));
-    if (config.verbose) {
-      console.log(`CreateDTO généré : ${createDtoFilePath}`);
+      const dtoFilePath = path.join(outputDir, `${modelName}.dto.ts`);
+      const createDtoFilePath = path.join(createDtoDir, `${modelName}.dto.ts`);
+
+      await fs.writeFile(dtoFilePath, dtoTemplate(className, dtoFields, dtoValidators));
+      await fs.writeFile(createDtoFilePath, createDtoTemplate(className, createDtoFields, createDtoValidators));
     }
   }
 }
 
-// Mettre à jour l'index
-const updateIndexFile = () => {
-  const dtoFiles = fs.readdirSync(outputDir).filter(file => file.endsWith('.dto.ts'));
-  const createDtoFiles = fs.readdirSync(createDtoDir).filter(file => file.endsWith('.dto.ts'));
-
-  let dtoExports = '';
-  let createDtoExports = '';
-
-  dtoFiles.forEach(file => {
-    const dtoName = path.basename(file, '.dto.ts');
-    const className = dtoName.charAt(0).toUpperCase() + dtoName.slice(1);
-    dtoExports += `import { ${className}Dto } from './${dtoName}.dto';\n`;
-  });
-
-  createDtoFiles.forEach(file => {
-    const dtoName = path.basename(file, '.dto.ts');
-    const className = dtoName.charAt(0).toUpperCase() + dtoName.slice(1);
-    createDtoExports += `import { Create${className}Dto } from './createDtos/${dtoName}.dto';\n`;
-  });
-
-  const indexFileContent = 
-`${dtoExports}\n${createDtoExports}
-export const dtos = {
-${dtoFiles.map(file => `  ${path.basename(file, '.dto.ts')}: ${path.basename(file, '.dto.ts').charAt(0).toUpperCase() + path.basename(file, '.dto.ts').slice(1)}Dto`).join(',\n')}
-};
-
-export const createDtos = {
-${createDtoFiles.map(file => `  ${path.basename(file, '.dto.ts')}: Create${path.basename(file, '.dto.ts').charAt(0).toUpperCase() + path.basename(file, '.dto.ts').slice(1)}Dto`).join(',\n')}
-};
-
-export type DtoKeys = keyof typeof dtos;
-export type DtoValues = typeof dtos[DtoKeys];
-
-export type CreateDtoKeys = keyof typeof createDtos;
-export type CreateDtoValues = typeof createDtos[CreateDtoKeys];`;
-
-  fs.writeFileSync(path.join(outputDir, 'index.ts'), indexFileContent);
-  if (config.verbose) {
-    console.log(`Index généré : ${path.join(outputDir, 'index.ts')}`);
+(async () => {
+  try {
+    const config = await loadConfig();
+    const models = DB.Models;
+    await generateDtoFiles(models, config);
+  } catch (error) {
+    console.error('Erreur lors de la génération des DTOs:', error);
   }
-};
-
-// Mettre à jour l'index après la génération des DTOs
-updateIndexFile();
+})();
