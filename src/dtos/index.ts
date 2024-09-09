@@ -1,4 +1,3 @@
-import { BaseDto } from './base.dto';
 import { ProductsDto } from './products.dto';
 import { UsersDto } from './users.dto';
 
@@ -6,7 +5,6 @@ import { CreateProductsDto } from './createDtos/products.dto';
 import { CreateUsersDto } from './createDtos/users.dto';
 
 export const dtos = {
-  base: BaseDto,
   products: ProductsDto,
   users: UsersDto
 };
