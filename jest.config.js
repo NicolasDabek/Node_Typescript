@@ -3,7 +3,7 @@ module.exports = {
   testMatch: ['**/tests/**/*.test.ts'],
   moduleNameMapper: {
     '^@controllers/(.*)$': '<rootDir>/src/controllers/$1',
-    '^@databases$': '<rootDir>/src/databases/$1',
+    '^@databases$': '<rootDir>/src/databases',
     '^@dtos/(.*)$': '<rootDir>/src/dtos/$1',
     '^@exceptions/(.*)$': '<rootDir>/src/exceptions/$1',
     '^@interfaces/(.*)$': '<rootDir>/src/interfaces/$1',
@@ -16,5 +16,5 @@ module.exports = {
   transform: {
     '^.+\\.ts$': 'ts-jest'
   },
-  moduleFileExtensions: ['ts', 'js', 'json', 'node', ".env"]
+  moduleFileExtensions: ['ts', 'js', 'json', 'node', '.env']
 }
