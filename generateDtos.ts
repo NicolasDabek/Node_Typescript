@@ -30,25 +30,25 @@ async function generateDtoFiles(models: any, config: any) {
   await ensureDirectoryExists(outputDir);
   await ensureDirectoryExists(createDtoDir);
 
-    // Fonction pour générer les imports à partir des validators utilisés
-    const generateImports = (validators: Set<string>) => {
-      return validators.size > 0 ? `import { ${[...validators].join(', ')} } from 'class-validator';\n` : '';
-    };
-  
-    // Template pour CreateDTO
-    const createDtoTemplate = (className: string, fields: string, validators: Set<string>) =>
-      `${generateImports(validators)}
-  export class Create${className}Dto {
-  ${fields}
-  }`;
-  
-    // Template pour le DTO normal
-    const dtoTemplate = (className: string, fields: string, validators: Set<string>) =>
-      `import { BaseDto } from './base.dto';
-  ${generateImports(validators)}
-  export class ${className}Dto extends BaseDto {
-  ${fields}
-  }`;
+  // Fonction pour générer les imports à partir des validators utilisés
+  const generateImports = (validators: Set<string>) => {
+    return validators.size > 0 ? `import { ${[...validators].join(', ')} } from 'class-validator';\n` : '';
+  };
+
+  // Template pour CreateDTO
+  const createDtoTemplate = (className: string, fields: string, validators: Set<string>) =>
+`${generateImports(validators)}
+export class Create${className}Dto {
+${fields}
+}`;
+
+  // Template pour le DTO normal
+  const dtoTemplate = (className: string, fields: string, validators: Set<string>) =>
+`import { BaseDto } from './base.dto';
+${generateImports(validators)}
+export class ${className}Dto extends BaseDto {
+${fields}
+}`;
   for (const modelName in models) {
     if (models.hasOwnProperty(modelName)) {
       const model = models[modelName];
@@ -162,7 +162,7 @@ const updateIndexFile = async () => {
       createDtoExports += `import { Create${className}Dto } from './createDtos/${dtoName}.dto';\n`;
     });
 
-    const indexFileContent = 
+    const indexFileContent =
 `${dtoExports}\n${createDtoExports}
 export const dtos = {
 ${dtoFiles.map(file => `  ${path.basename(file, '.dto.ts')}: ${path.basename(file, '.dto.ts').charAt(0).toUpperCase() + path.basename(file, '.dto.ts').slice(1)}Dto`).join(',\n')}
