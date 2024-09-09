@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { app } from '../src/index';
-import DB from '@databases';
+import DB from '../src/databases';
 
 const userData = {
   pseudo: 'testuser',
@@ -16,26 +16,30 @@ const testCRUD = (modelName, model, sampleData) => {
     let itemId;
 
     beforeAll(done => {
-      // Start the server and wait for it to be ready
-      app.server.on("connect", async () => {
-        console.log('Server is listening');
-        await DB.sequelize.sync({ force: true });
-        done();
-      });
+      if (!app.server.listening) {
+        // Start the server and wait for it to be ready
+        app.server.on("connect", async () => {
+          console.log('Server is listening');
+          await DB.sequelize.sync({ force: true });
+          done();
+        });
 
-      app.server.on('error', err => {
-        console.error('Server encountered an error:', err);
-        done(err);
-      });
+        app.server.on('error', err => {
+          console.error('Server encountered an error:', err);
+          done(err);
+        });
+      }
     });
 
-    afterAll(done => { 
-      // Close the server and wait for it to close
-      app.server.close(() => {
-        console.log('Server has been closed');
-        DB.sequelize.close();
-        done();
-      });
+    afterAll(done => {
+      if (app.server.listening) {
+        // Close the server and wait for it to close
+        app.server.close(() => {
+          console.log('Server has been closed');
+          DB.sequelize.close();
+          done();
+        });
+      }
     });
 
     it(`should create a new ${modelName}`, async () => {
