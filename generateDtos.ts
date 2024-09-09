@@ -4,7 +4,8 @@ import DB from './src/databases';
 
 const configPath = path.resolve(__dirname, './generateDtos.config.json');
 const outputDir = path.resolve(__dirname, './src/dtos');
-const baseDtoPath = path.join(outputDir, '/base.dto.ts')
+const baseDtoFilePath = path.join(outputDir, 'base.dto.ts')
+const indexFilePath = path.join(outputDir, 'index.ts')
 const createDtoDir = path.join(outputDir, 'createDtos');
 
 async function loadConfig() {
@@ -134,8 +135,8 @@ export class BaseDto {
 }`;
 
   try {
-    await fs.writeFile(baseDtoPath, baseDtoContent);
-    console.log(`Base DTO généré : ${baseDtoPath}`);
+    await fs.writeFile(baseDtoFilePath, baseDtoContent);
+    console.log(`Base DTO généré : ${baseDtoFilePath}`);
   } catch (error) {
     console.error('Erreur lors de la génération du BaseDto:', error);
   }
@@ -177,8 +178,8 @@ export type DtoValues = typeof dtos[DtoKeys];
 export type CreateDtoKeys = keyof typeof createDtos;
 export type CreateDtoValues = typeof createDtos[CreateDtoKeys];`;
 
-    await fs.writeFile(path.join(outputDir, 'index.ts'), indexFileContent);
-    console.log(`Index généré : ${path.join(outputDir, 'index.ts')}`);
+    await fs.writeFile(indexFilePath, indexFileContent);
+    console.log(`Index généré : ${indexFilePath}`);
   } catch (error) {
     console.error('Erreur lors de la génération du fichier d\'index:', error);
   }
