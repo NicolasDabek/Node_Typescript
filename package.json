@@ -1,7 +1,7 @@
 {
   "name": "node_typescript",
   "version": "1.0.0",
-  "description": "",
+  "description": "Starter Node.js, Typescript, Sequelize and Express.js.",
   "main": "dist/src/index.js",
   "dependencies": {
     "axios": "^1.7.2",
