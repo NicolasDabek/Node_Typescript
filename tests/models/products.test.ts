@@ -1,7 +1,7 @@
 import request from 'supertest';
-import { app } from '../../index';
-import { generateFakeData } from '../../../generateTests';
-import { products } from '../../models/products'
+import { app } from '../../src/index';
+import { generateFakeData } from '../../generateTests';
+import { products } from '../../src/models/products'
 
 describe('Products API', () => {
   let transaction: any;

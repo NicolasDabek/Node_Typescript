@@ -3,7 +3,7 @@ import path from 'path';
 import { DataTypes } from 'sequelize';
 
 // Répertoires pour les tests
-const testDir = path.resolve(__dirname, 'src/tests');
+const testDir = path.resolve(__dirname, 'tests');
 const modelTestDir = path.join(testDir, 'models');
 const modelsDir = path.resolve(__dirname, 'src/models'); // Dossier des modèles
 
@@ -50,9 +50,9 @@ async function generateModelTests() {
     const testFilePath = path.join(modelTestDir, `${modelName}.test.ts`);
 
     const testContent = `import request from 'supertest';
-import { app } from '../../index';
-import { generateFakeData } from '../../../generateTests';
-import { ${modelName} } from '../../models/${modelName}'
+import { app } from '../../src/index';
+import { generateFakeData } from '../../generateTests';
+import { ${modelName} } from '../../src/models/${modelName}'
 
 describe('${className} API', () => {
   let transaction: any;
