@@ -1,5 +1,5 @@
 import config from 'config';
-import Sequelize from 'sequelize';
+import { Sequelize } from 'sequelize';
 import { dbConfig } from '../interfaces/db.interface';
 import { logger } from '../utils/logger.util';
 import { initModels } from '../models/init-models';
@@ -12,7 +12,7 @@ try {
 }
 
 const { host, user, password, database, pool, port }: dbConfig = configDB
-const sequelize = new Sequelize.Sequelize(database, user, password, {
+const sequelize = new Sequelize(database, user, password, {
   host: host,
   dialect: 'mysql',
   timezone: '+01:00',
