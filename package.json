@@ -85,6 +85,7 @@
     "generate-models": "npx ts-node generateModels.ts",
     "generate-dtos": "npx ts-node generateDtos.ts",
     "generate-docs": "npm run build && node dist/src/swagger/generateSwaggerDocs.js",
+    "generate-tests": "npx ts-node generateTests.ts",
     "generate-all": "npm run generate-models && npm run generate-dtos && npm run generate-docs"
   },
   "author": "Nicolas Dabek",

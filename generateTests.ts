@@ -1,12 +1,11 @@
 import fs from 'fs/promises';
 import path from 'path';
-import DB from './src/databases'; // Assure-toi que ce chemin est correct
-import faker from '@faker-js/faker';
+import { DataTypes } from 'sequelize';
 
 // Répertoires pour les tests
-const testDir = path.resolve(__dirname, './src/tests');
+const testDir = path.resolve(__dirname, 'src/tests');
 const modelTestDir = path.join(testDir, 'models');
-const modelsDir = path.resolve(__dirname, './src/models'); // Dossier des modèles
+const modelsDir = path.resolve(__dirname, 'src/models'); // Dossier des modèles
 
 async function ensureDirectoryExists(dirPath: string) {
   try {
@@ -14,6 +13,30 @@ async function ensureDirectoryExists(dirPath: string) {
   } catch (error) {
     console.error(`Erreur lors de la création du dossier ${dirPath}:`, error);
   }
+}
+
+export function generateFakeData(attributes: any) {
+  const instanceData: { [key: string]: any } = {};
+
+  for (const key in attributes) {
+    const attribute = attributes[key];
+
+    // Déterminer le type de l'attribut et générer des données en conséquence
+    if (attribute.type instanceof DataTypes.STRING) {
+      instanceData[key] = "test-string"; // Exemple pour les chaînes de caractères
+    } else if (attribute.type instanceof DataTypes.INTEGER) {
+      instanceData[key] = 1; // Générer un entier
+    } else if (attribute.type instanceof DataTypes.BOOLEAN) {
+      instanceData[key] = Math.round(Math.random()); // Un booléen est un tyniInt avec MySQL
+    } else if (attribute.type instanceof DataTypes.DATE) {
+      instanceData[key] = new Date(); // Générer une date actuelle
+    } else if (attribute.type instanceof DataTypes.FLOAT || attribute.type instanceof DataTypes.DECIMAL) {
+      instanceData[key] = parseFloat((Math.random() * 100).toFixed(2)); // Générer un float avec précision
+    }
+    // Ajouter plus de conditions selon les types d'attributs
+  }
+
+  return instanceData;
 }
 
 async function generateModelTests() {
@@ -24,45 +47,82 @@ async function generateModelTests() {
   for (const modelFile of modelFiles) {
     const modelName = path.basename(modelFile, '.ts');
     const className = modelName.charAt(0).toUpperCase() + modelName.slice(1);
-
     const testFilePath = path.join(modelTestDir, `${modelName}.test.ts`);
-    const testContent = `import DB from '../../databases';
-import faker from '@faker-js/faker';
 
-describe('${className} model', () => {
-  let modelInstance: typeof DB.Models.${modelName};
+    const testContent = `import request from 'supertest';
+import { app } from '../../index';
+import { generateFakeData } from '../../../generateTests';
+import { ${modelName} } from '../../models/${modelName}'
 
-  beforeAll(() => {
-    modelInstance = DB.Models.${modelName};
+describe('${className} API', () => {
+  let transaction: any;
+  const instanceData = generateFakeData(${modelName}.rawAttributes);
+
+  beforeAll(async () => {
+    await app.dbSequelize.sequelize.sync({ force: true });
   });
 
-  it('should be defined', () => {
-    expect(modelInstance).toBeDefined();
+  beforeEach(async () => {
+    transaction = await app.dbSequelize.sequelize.transaction();
   });
 
-  it('should find a record by primary key', async () => {
-    // Assurez-vous qu'un enregistrement avec cet ID existe
-    const instance = await modelInstance.findByPk(1); // Remplace 1 par un ID réel si besoin
-    expect(instance).not.toBeNull();
+  afterEach(async () => {
+    await transaction.rollback();
   });
 
-  it('should create a new instance', async () => {
-    const instance = await modelInstance.create({ 
-      // Remplir les champs requis avec des valeurs générées par faker
-      pseudo: faker.fakerFR.person.fullName(),
-      email: faker.fakerFR.internet.email(),
-      password: faker.fakerFR.internet.password(),
-      isActive: faker.fakerFR.datatype.boolean(),
-      addressIP: faker.fakerFR.internet.ip(),
-      dateCreation: new Date()
-    });
-    expect(instance).toBeDefined();
-    expect(instance.id).toBeTruthy(); // Vérifie que l'ID a bien été généré
+  afterAll(async () => {
+    await app.dbSequelize.sequelize.close();
+  });
+
+  it('should create a new ${modelName}', async () => {
+    const { id, ...restInstanceData } = instanceData
+    const response = await request(app.app)
+      .post('/${modelName}')
+      .send(restInstanceData);
+    expect(response.statusCode).toEqual(201);
+    expect(response.body.data).toHaveProperty('id');
+  });
+
+  it('should find a ${modelName} by ID', async () => {
+    const getResponse = await request(app.app)
+      .get(\`/${modelName}/1\`)
+      .expect(200);
+    expect(getResponse.body.data).toHaveProperty('id', 1);
+    expect(getResponse.body.data).toBeDefined();
+  });
+
+  it('should update an existing ${modelName}', async () => {
+    const updatedData = generateFakeData(${modelName}.rawAttributes);
+    const { id, ...restUpdatedData } = updatedData
+    const updateResponse = await request(app.app)
+      .put(\`/${modelName}/1\`)
+      .send(restUpdatedData);
+    expect(updateResponse.statusCode).toEqual(200);
+    expect(updateResponse.body.data).toMatchObject(updatedData);
+  });
+
+  it('should delete an existing ${modelName}', async () => {
+    const deleteResponse = await request(app.app)
+      .delete(\`/${modelName}/1\`)
+      .expect(200);
+    expect(deleteResponse.body).toBeDefined();
+
+    // Verify that the record no longer exists
+    const getResponse = await request(app.app)
+      .get(\`/${modelName}/1\`)
+      .expect(404);
+  });
+
+  it('should return 404 for non-existent ${modelName}', async () => {
+    const nonExistentId = 999999;
+    await request(app.app)
+      .get(\`/${modelName}/\${nonExistentId}\`)
+      .expect(404);
   });
 });`;
 
     await fs.writeFile(testFilePath, testContent);
-    console.log(`Test pour ${className} model généré : ${testFilePath}`);
+    console.log(`Test pour ${className} généré : ${testFilePath}`);
   }
 }
 
