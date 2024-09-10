@@ -33,8 +33,6 @@ describe('User API', () => {
     const res = await request(app.app)
       .post('/users')
       .send(fakeUser);
-    console.log("fakeUser", fakeUser)
-    console.log("res.body", res.body)
     expect(res.statusCode).toEqual(201);
     expect(res.body.data).toHaveProperty('id');
     expect(res.body.data.pseudo).toBe(fakeUser.pseudo);
@@ -50,7 +48,6 @@ describe('User API', () => {
     const res = await request(app.app)
       .put(`/users/1`)
       .send({ ...fakeUser, pseudo: 'John Doe' });
-      console.log("res.body", res.body)
     expect(res.statusCode).toEqual(200);
     expect(res.body.data.pseudo).toBe('John Doe');
   });
