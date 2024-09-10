@@ -1,5 +1,5 @@
 import { BaseDto } from './base.dto';
-import { IsString, IsBoolean, IsDate } from 'class-validator';
+import { IsString, IsNumber, IsDate } from 'class-validator';
 
 export class UsersDto extends BaseDto {
   @IsString()
@@ -11,8 +11,8 @@ export class UsersDto extends BaseDto {
   @IsString()
   public email: string;
 
-  @IsBoolean()
-  public isActive: boolean;
+  @IsNumber()
+  public isActive: number;
 
   @IsString()
   public addressIP: string;
