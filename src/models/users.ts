@@ -47,9 +47,9 @@ export class users extends Model<usersAttributes, usersCreationAttributes> imple
       allowNull: false
     },
     isActive: {
-      type: DataTypes.BOOLEAN,
+      type: DataTypes.SMALLINT,
       allowNull: true,
-      defaultValue: 0
+      defaultValue: 1
     },
     addressIP: {
       type: DataTypes.STRING(255),
