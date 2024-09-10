@@ -79,12 +79,10 @@ ${fields}
           case 'FLOAT':
           case 'DOUBLE':
           case 'DECIMAL':
+          case 'BOOLEAN':
+          case 'SMALLINT':
             tsType = 'number';
             validator = '@IsNumber()';
-            break;
-          case 'BOOLEAN':
-            tsType = 'boolean';
-            validator = '@IsBoolean()';
             break;
           case 'DATE':
           case 'DATEONLY':
