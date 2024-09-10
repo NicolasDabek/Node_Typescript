@@ -42,10 +42,12 @@ class App {
   }
 
   public listen() {
-    this.server = this.app.listen(this.port, () => {
-      logger.info(`ENV: ${this.env}`);
-      logger.info(`App listening on port ${this.port}`);
-    });
+    if(this.server?.listening) {
+      this.server = this.app.listen(this.port, () => {
+        logger.info(`ENV: ${this.env}`);
+        logger.info(`App listening on port ${this.port}`);
+      });
+    }
   }
 
   public getServer() {
