@@ -1,3 +1,4 @@
+import DB from './src/databases';
 import fs from 'fs/promises';
 import path from 'path';
 import { DataTypes } from 'sequelize';
@@ -48,7 +49,8 @@ async function generateModelTests() {
     const modelName = path.basename(modelFile, '.ts');
     const className = modelName.charAt(0).toUpperCase() + modelName.slice(1);
     const testFilePath = path.join(modelTestDir, `${modelName}.test.ts`);
-
+    const primaryKey = Object.keys(DB.Models[modelName].rawAttributes).find(key => DB.Models[modelName].rawAttributes[key].primaryKey);
+    
     const testContent = `import request from 'supertest';
 import { app } from '../../src/index';
 import { generateFakeData } from '../../generateTests';
@@ -75,7 +77,7 @@ describe('${className} API', () => {
   });
 
   it('should create a new ${modelName}', async () => {
-    const { id, ...restInstanceData } = instanceData
+    const { ${primaryKey}, ...restInstanceData } = instanceData
     const response = await request(app.app)
       .post('/${modelName}')
       .send(restInstanceData);
