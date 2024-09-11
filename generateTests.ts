@@ -82,7 +82,7 @@ describe('${className} API', () => {
       .post('/${modelName}')
       .send(restInstanceData);
     expect(response.statusCode).toEqual(201);
-    expect(response.body.data).toHaveProperty('id');
+    expect(response.body.data).toHaveProperty('${primaryKey}');
   });
 
   it('should find a ${modelName} by ID', async () => {
