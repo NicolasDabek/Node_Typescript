@@ -22,8 +22,7 @@ class App {
   public port: string | number;
   public env: string;
   public dbSequelize = DB;
-  public server: Server;
-  public isServerRunning = false;
+  public static server: Server;
 
   constructor(routes: Routes[], generateSwaggerDocs: boolean = false) {
     this.app = express();
@@ -42,18 +41,17 @@ class App {
   }
 
   public listen() {
-    if (this.isServerRunning) {
+    if (App.server?.listening) {
       console.log(`Server is already running on port ${this.port}`);
       return;
     }
 
-    this.server = this.app.listen(this.port, () => {
-      this.isServerRunning = true;
+    App.server = this.app.listen(this.port, () => {
       logger.info(`ENV: ${this.env}`);
       logger.info(`App listening on port ${this.port}`);
     });
 
-    this.server.on('error', (error: any) => {
+    App.server.on('error', (error: any) => {
       if (error.code === 'EADDRINUSE') {
         logger.error(`Port ${this.port} is already in use`);
       } else {
