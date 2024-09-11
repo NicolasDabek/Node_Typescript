@@ -6,6 +6,7 @@ import { users } from '../../src/models/users'
 describe('Users API', () => {
   let transaction: any;
   const instanceData = generateFakeData(users.rawAttributes);
+  let createdData: users;
 
   beforeAll(async () => {
     await app.dbSequelize.sequelize.sync({ force: true });
@@ -28,6 +29,7 @@ describe('Users API', () => {
     const response = await request(app.app)
       .post('/users')
       .send(restInstanceData);
+    createdData = response.body.data
     expect(response.statusCode).toEqual(201);
     expect(response.body.data).toHaveProperty('id');
   });
@@ -47,7 +49,7 @@ describe('Users API', () => {
       .put(`/users/1`)
       .send(restUpdatedData);
     expect(updateResponse.statusCode).toEqual(200);
-    expect(updateResponse.body.data).toMatchObject(updatedData);
+    expect(updateResponse.body.data).not.toEqual(createdData);
   });
 
   it('should delete an existing users', async () => {

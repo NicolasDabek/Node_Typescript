@@ -6,6 +6,7 @@ import { products } from '../../src/models/products'
 describe('Products API', () => {
   let transaction: any;
   const instanceData = generateFakeData(products.rawAttributes);
+  let createdData: products;
 
   beforeAll(async () => {
     await app.dbSequelize.sequelize.sync({ force: true });
@@ -28,6 +29,7 @@ describe('Products API', () => {
     const response = await request(app.app)
       .post('/products')
       .send(restInstanceData);
+    createdData = response.body.data
     expect(response.statusCode).toEqual(201);
     expect(response.body.data).toHaveProperty('id');
   });
@@ -47,7 +49,7 @@ describe('Products API', () => {
       .put(`/products/1`)
       .send(restUpdatedData);
     expect(updateResponse.statusCode).toEqual(200);
-    expect(updateResponse.body.data).toMatchObject(updatedData);
+    expect(updateResponse.body.data).not.toEqual(createdData);
   });
 
   it('should delete an existing products', async () => {

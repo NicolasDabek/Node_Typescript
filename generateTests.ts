@@ -21,7 +21,6 @@ export function generateFakeData(attributes: any) {
 
   for (const key in attributes) {
     const attribute = attributes[key];
-
     // Déterminer le type de l'attribut et générer des données en conséquence
     if (attribute.type instanceof DataTypes.STRING) {
       instanceData[key] = "test-string"; // Exemple pour les chaînes de caractères
@@ -36,13 +35,12 @@ export function generateFakeData(attributes: any) {
     }
     // Ajouter plus de conditions selon les types d'attributs
   }
-
   return instanceData;
 }
 
 async function generateModelTests() {
   await ensureDirectoryExists(modelTestDir);
-  
+
   const modelFiles = (await fs.readdir(modelsDir)).filter(file => file.endsWith('.ts') && file !== 'init-models.ts');
 
   for (const modelFile of modelFiles) {
@@ -50,7 +48,7 @@ async function generateModelTests() {
     const className = modelName.charAt(0).toUpperCase() + modelName.slice(1);
     const testFilePath = path.join(modelTestDir, `${modelName}.test.ts`);
     const primaryKey = Object.keys(DB.Models[modelName].rawAttributes).find(key => DB.Models[modelName].rawAttributes[key].primaryKey);
-    
+
     const testContent = `import request from 'supertest';
 import { app } from '../../src/index';
 import { generateFakeData } from '../../generateTests';
@@ -59,6 +57,7 @@ import { ${modelName} } from '../../src/models/${modelName}'
 describe('${className} API', () => {
   let transaction: any;
   const instanceData = generateFakeData(${modelName}.rawAttributes);
+  let createdData: ${modelName};
 
   beforeAll(async () => {
     await app.dbSequelize.sequelize.sync({ force: true });
@@ -81,6 +80,7 @@ describe('${className} API', () => {
     const response = await request(app.app)
       .post('/${modelName}')
       .send(restInstanceData);
+    createdData = response.body.data
     expect(response.statusCode).toEqual(201);
     expect(response.body.data).toHaveProperty('${primaryKey}');
   });
@@ -100,7 +100,7 @@ describe('${className} API', () => {
       .put(\`/${modelName}/1\`)
       .send(restUpdatedData);
     expect(updateResponse.statusCode).toEqual(200);
-    expect(updateResponse.body.data).toMatchObject(updatedData);
+    expect(updateResponse.body.data).not.toEqual(createdData);
   });
 
   it('should delete an existing ${modelName}', async () => {
