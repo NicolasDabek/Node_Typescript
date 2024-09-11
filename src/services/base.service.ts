@@ -40,6 +40,17 @@ class BaseService {
     return rows;
   }
 
+  public async findLastData(tableName: string): Promise<Model> {
+    try {
+      const options: Object = { order: [['id', 'DESC']], limit: 1 };
+      const lastData = await this.models[tableName]?.findOne(options);
+      if (!lastData) throw new HttpException(404, "No data found.");
+      return lastData;
+    } catch (error) {
+      console.error('Erreur lors de la récupération de la dernière donnée:', error);
+    }
+  };
+
   public async createData(tableName: string, datas: BaseDto): Promise<Model> {
     if (isEmpty(datas)) throw new HttpException(400, "Data is required.");
     if (BaseRoute.usersTableName.includes(tableName) && datas["password"]) {
