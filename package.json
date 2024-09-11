@@ -82,11 +82,11 @@
     "dev": "cross-env NODE_ENV=development nodemon",
     "build": "tsc && npx tsc-alias",
     "test": "jest",
-    "generate-models": "npx ts-node generateModels.ts",
-    "generate-dtos": "npx ts-node generateDtos.ts",
-    "generate-docs": "npm run build && node dist/src/swagger/generateSwaggerDocs.js",
-    "generate-tests": "npx ts-node generateTests.ts",
-    "generate-all": "npm run generate-models && npm run generate-dtos && npm run generate-docs"
+    "gen-models": "npx ts-node generateModels.ts",
+    "gen-dtos": "npx ts-node generateDtos.ts",
+    "gen-docs": "npm run build && node dist/src/swagger/generateSwaggerDocs.js",
+    "gen-tests": "npx ts-node generateTests.ts",
+    "gen-all": "npm run gen-models && npm run gen-dtos && npm run gen-docs && npm run gen-tests"
   },
   "author": "Nicolas Dabek",
   "license": "ISC"
