@@ -14,16 +14,12 @@ class BaseRoute implements Route {
   private checkAuth = (req: RequestWithUser, res: Response, next: NextFunction) => next()
 
   constructor() {
-    this.initializeRoutes()
+    if(this.activateAuthMiddleware) this.checkAuth = authMiddleware
 
-    if(this.activateAuthMiddleware) this.checkAuth = authMiddleware 
+    this.initializeRoutes()
   }
 
   private initializeRoutes() {
-    this.baseCRUD()
-  }
-
-  private baseCRUD() {
     this.router.get(`${this.path}`, this.checkAuth, BaseControler.getAllDatas)
     this.router.get(`${this.path}/:id(\\d+)`, this.checkAuth, BaseControler.getDataById)
     this.router.get(`${this.path}/onefield/:fieldName`, this.checkAuth, BaseControler.getAllDataOneField)
