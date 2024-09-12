@@ -52,8 +52,12 @@ class BaseService {
 
   public async createData(tableName: string, datas: Model): Promise<Model> {
     if (isEmpty(datas)) throw new HttpException(400, "Data is required.");
-    if (BaseRoute.usersTableName.includes(tableName) && datas["password"]) {
-      datas["password"] = await bcrypt.hash(datas["password"], parseInt(process.env.USER_PASSWORD_HASH_SALT, 10));
+
+    if (BaseRoute.userTableName == tableName && datas[BaseRoute.fieldNameUserPassword]) {
+      datas[BaseRoute.fieldNameUserPassword] = await bcrypt.hash(
+        datas[BaseRoute.fieldNameUserPassword],
+        parseInt(process.env.USER_PASSWORD_HASH_SALT, 10)
+      );
     }
     return await this.models[tableName]?.create(datas);
   }
@@ -62,8 +66,12 @@ class BaseService {
     if (isEmpty(datas)) throw new HttpException(400, "Data is required.");
     const findData: Model = await this.models[tableName].findByPk(dataId);
     if (!findData) throw new HttpException(404, "Data not found.");
-    if (BaseRoute.usersTableName.includes(tableName) && datas["password"]) {
-      datas["password"] = await bcrypt.hash(datas["password"], parseInt(process.env.USER_PASSWORD_HASH_SALT, 10));
+
+    if (BaseRoute.userTableName == tableName && datas[BaseRoute.fieldNameUserPassword]) {
+      datas[BaseRoute.fieldNameUserPassword] = await bcrypt.hash(
+        datas[BaseRoute.fieldNameUserPassword],
+        parseInt(process.env.USER_PASSWORD_HASH_SALT, 10)
+      );
     }
     await this.models[tableName].update(datas, { where: { id: dataId } });
     return await this.models[tableName]?.findByPk(dataId);

@@ -8,7 +8,10 @@ import { RequestWithUser } from '../interfaces/auth.interface'
 class BaseRoute implements Route {
   public path = '/:model'
   public router = Router()
-  public static usersTableName = ["users"]
+  // Used in BaseService.createData()
+  public static userTableName = "users"
+  // Used in BaseService.createData()
+  public static fieldNameUserPassword = process.env.FIELD_NAME_USER_PASSWORD
   public static relTables = []
   private activateAuthMiddleware = false
   private checkAuth = (req: RequestWithUser, res: Response, next: NextFunction) => next()
