@@ -3,7 +3,7 @@ import { DataTypes, Model, Optional } from 'sequelize';
 
 export interface usersAttributes {
   id: number;
-  pseudo: string;
+  username: string;
   password: string;
   email: string;
   isActive?: number;
@@ -18,7 +18,7 @@ export type usersCreationAttributes = Optional<usersAttributes, usersOptionalAtt
 
 export class users extends Model<usersAttributes, usersCreationAttributes> implements usersAttributes {
   id!: number;
-  pseudo!: string;
+  username!: string;
   password!: string;
   email!: string;
   isActive?: number;
@@ -34,7 +34,7 @@ export class users extends Model<usersAttributes, usersCreationAttributes> imple
       allowNull: false,
       primaryKey: true
     },
-    pseudo: {
+    username: {
       type: DataTypes.STRING(255),
       allowNull: false
     },

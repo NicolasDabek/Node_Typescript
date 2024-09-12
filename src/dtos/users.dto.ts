@@ -3,7 +3,7 @@ import { IsString, IsNumber, IsDate } from 'class-validator';
 
 export class UsersDto extends BaseDto {
   @IsString()
-  public pseudo: string;
+  public username: string;
 
   @IsString()
   public password: string;
