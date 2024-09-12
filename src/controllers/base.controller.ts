@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 import BaseService from "../services/base.service";
-import { BaseDto } from "../dtos/base.dto";
 import HttpException from "../exceptions/HttpException";
 import { Model } from "sequelize";
 
@@ -77,7 +76,7 @@ class BaseController {
     try {
       const tableName = req.params.model.toString();
       const dataId = Number(req.params.id);
-      const datas: BaseDto = req.body;
+      const datas: Model = req.body;
       await BaseController.baseService.updateData(tableName, dataId, datas);
       const updatedData = await (await BaseController.baseService.findLastData(tableName)).dataValues
       res.status(200).json({ datas: updatedData });

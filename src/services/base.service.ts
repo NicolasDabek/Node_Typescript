@@ -3,7 +3,6 @@ import DB from '../databases';
 import HttpException from '../exceptions/HttpException';
 import { isEmpty } from '../utils/others.util';
 import { Model } from 'sequelize';
-import { BaseDto } from '../dtos/base.dto';
 import BaseRoute from '../routes/base.route';
 
 class BaseService {
@@ -59,7 +58,7 @@ class BaseService {
     return await this.models[tableName]?.create(datas);
   }
 
-  public async updateData(tableName: string, dataId: number, datas: BaseDto): Promise<Model> {
+  public async updateData(tableName: string, dataId: number, datas: Model): Promise<Model> {
     if (isEmpty(datas)) throw new HttpException(400, "Data is required.");
     const findData: Model = await this.models[tableName].findByPk(dataId);
     if (!findData) throw new HttpException(404, "Data not found.");
