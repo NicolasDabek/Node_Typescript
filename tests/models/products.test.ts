@@ -29,17 +29,17 @@ describe('Products API', () => {
     const response = await request(app.app)
       .post('/products')
       .send(restInstanceData);
-    createdData = response.body.data
+    createdData = response.body.datas
     expect(response.statusCode).toEqual(201);
-    expect(response.body.data).toHaveProperty('id');
+    expect(response.body.datas).toHaveProperty('id');
   });
 
   it('should find a products by ID', async () => {
     const getResponse = await request(app.app)
       .get(`/products/1`)
       .expect(200);
-    expect(getResponse.body.data).toHaveProperty('id', 1);
-    expect(getResponse.body.data).toBeDefined();
+    expect(getResponse.body.datas).toHaveProperty('id', 1);
+    expect(getResponse.body.datas).toBeDefined();
   });
 
   it('should update an existing products', async () => {
@@ -49,7 +49,7 @@ describe('Products API', () => {
       .put(`/products/1`)
       .send(restUpdatedData);
     expect(updateResponse.statusCode).toEqual(200);
-    expect(updateResponse.body.data).not.toEqual(createdData);
+    expect(updateResponse.body.datas).not.toEqual(createdData);
   });
 
   it('should delete an existing products', async () => {
