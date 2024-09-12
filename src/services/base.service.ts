@@ -51,7 +51,7 @@ class BaseService {
     }
   };
 
-  public async createData(tableName: string, datas: BaseDto): Promise<Model> {
+  public async createData(tableName: string, datas: Model): Promise<Model> {
     if (isEmpty(datas)) throw new HttpException(400, "Data is required.");
     if (BaseRoute.usersTableName.includes(tableName) && datas["password"]) {
       datas["password"] = await bcrypt.hash(datas["password"], parseInt(process.env.USER_PASSWORD_HASH_SALT, 10));

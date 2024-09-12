@@ -80,17 +80,17 @@ describe('${className} API', () => {
     const response = await request(app.app)
       .post('/${modelName}')
       .send(restInstanceData);
-    createdData = response.body.data
+    createdData = response.body.datas
     expect(response.statusCode).toEqual(201);
-    expect(response.body.data).toHaveProperty('${primaryKey}');
+    expect(response.body.datas).toHaveProperty('${primaryKey}');
   });
 
   it('should find a ${modelName} by ID', async () => {
     const getResponse = await request(app.app)
       .get(\`/${modelName}/1\`)
       .expect(200);
-    expect(getResponse.body.data).toHaveProperty('id', 1);
-    expect(getResponse.body.data).toBeDefined();
+    expect(getResponse.body.datas).toHaveProperty('id', 1);
+    expect(getResponse.body.datas).toBeDefined();
   });
 
   it('should update an existing ${modelName}', async () => {
@@ -100,7 +100,7 @@ describe('${className} API', () => {
       .put(\`/${modelName}/1\`)
       .send(restUpdatedData);
     expect(updateResponse.statusCode).toEqual(200);
-    expect(updateResponse.body.data).not.toEqual(createdData);
+    expect(updateResponse.body.datas).not.toEqual(createdData);
   });
 
   it('should delete an existing ${modelName}', async () => {
