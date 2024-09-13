@@ -3,7 +3,7 @@ import { Model, ModelStatic, CreationAttributes } from 'sequelize';
 import BaseRoute from '../routes/base.route';
 import { ObjectUtil } from '../utils/object.util';
 
-type UserAttributes<T extends Model> = CreationAttributes<T>;
+type UserCreationAttributes<T extends Model> = CreationAttributes<T> & { [key: string]: any };
 
 class UsersService<T extends Model> {
   private userModel: ModelStatic<T>;
@@ -17,24 +17,23 @@ class UsersService<T extends Model> {
     return bcrypt.hash(password, saltRounds);
   }
 
-  public async registerUser(userDatas: UserAttributes<T>): Promise<Omit<T, typeof BaseRoute.fieldNameUserPassword>> {
-    const passwordField = BaseRoute.fieldNameUserPassword as keyof UserAttributes<T>;
+  public async registerUser(userDatas: Partial<UserCreationAttributes<T>>): Promise<Omit<UserCreationAttributes<T>, typeof BaseRoute.fieldNameUserPassword>> {
+    const passwordField = BaseRoute.fieldNameUserPassword as keyof UserCreationAttributes<T>;
     const password = userDatas[passwordField] as string | undefined;
 
     if (!password) {
       throw new Error('Password is required.');
     }
 
-    userDatas[passwordField] = await this.hashPassword(password) as any;
+    userDatas[passwordField] = await this.hashPassword(password);
 
-    const createdUser = (await this.userModel.create(userDatas)).get({ plain: true });
+    const createdUser = await this.userModel.create(userDatas as UserCreationAttributes<T>);
+    const plainUser = createdUser.get({ plain: true });
 
-    const userWithoutPasswordField = ObjectUtil.filterKeys(
-      createdUser,
-      [passwordField] as (keyof UserAttributes<T>)[]
-    );
-
-    return userWithoutPasswordField as Omit<T, typeof BaseRoute.fieldNameUserPassword>;
+    return ObjectUtil.filterKeys(
+      plainUser,
+      [passwordField] as (keyof UserCreationAttributes<T>)[]
+    ) as Omit<UserCreationAttributes<T>, typeof BaseRoute.fieldNameUserPassword>;
   }
 }
 
