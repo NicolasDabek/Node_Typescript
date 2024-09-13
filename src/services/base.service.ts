@@ -52,13 +52,6 @@ class BaseService {
 
   public async createData(tableName: string, datas: Model): Promise<Model> {
     if (isEmpty(datas)) throw new HttpException(400, "Data is required.");
-
-    if (BaseRoute.userTableName == tableName && datas[BaseRoute.fieldNameUserPassword]) {
-      datas[BaseRoute.fieldNameUserPassword] = await bcrypt.hash(
-        datas[BaseRoute.fieldNameUserPassword],
-        parseInt(process.env.USER_PASSWORD_HASH_SALT, 10)
-      );
-    }
     return await this.models[tableName]?.create(datas);
   }
 

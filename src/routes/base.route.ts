@@ -4,14 +4,17 @@ import Route from '../interfaces/routes.interface'
 import validationMiddleware from '../middlewares/validation.middleware'
 import authMiddleware from '../middlewares/auth.middleware'
 import { RequestWithUser } from '../interfaces/auth.interface'
+import DB from '../databases'
+import { ClassUtil } from '../utils/class.util'
 
 class BaseRoute implements Route {
   public path = '/:model'
   public router = Router()
+  public static userTable = DB.Models.users
   // Used in BaseService.createData()
-  public static userTableName = "users"
+  public static userTableName = ClassUtil.getClassName(this.userTable)
   // Used in BaseService.createData()
-  public static fieldNameUserPassword = process.env.FIELD_NAME_USER_PASSWORD
+  public static fieldNameUserPassword = "password"
   public static relTables = []
   private activateAuthMiddleware = false
   private checkAuth = (req: RequestWithUser, res: Response, next: NextFunction) => next()
