@@ -2,7 +2,7 @@ import { plainToInstance, ClassConstructor } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
 import { RequestHandler } from 'express';
 import HttpException from '../exceptions/HttpException';
-import { createDtos, CreateDtoKeys } from '../dtos/index';
+import { dtos, DtoKeys, createDtos } from '../dtos/index';
 
 const validationMiddleware = (
   value: 'body' | 'query' | 'params' = 'body',
@@ -11,10 +11,11 @@ const validationMiddleware = (
   forbidNonWhitelisted = true,
 ): RequestHandler => {
   return async (req, res, next) => {
-    const tableName = req.params.model?.toLowerCase() as CreateDtoKeys;
+    const tableName = req.params.model?.toLowerCase() as DtoKeys;
+    const dtosType = value == 'body' ? createDtos : dtos;
 
-    if (createDtos[tableName]) {
-      const dtoClass = createDtos[tableName] as ClassConstructor<any>;
+    if (dtosType[tableName]) {
+      const dtoClass = dtosType[tableName] as ClassConstructor<any>;
       const dtoInstance = plainToInstance(dtoClass, req[value]);
       const errors: ValidationError[] = await validate(dtoInstance, { skipMissingProperties, whitelist, forbidNonWhitelisted });
 
