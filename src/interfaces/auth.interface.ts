@@ -3,7 +3,7 @@ import { users } from '../models/users';
 
 export interface DataStoredInToken {
   id: number
-  mail: string
+  username: string
   role?: number
 }
 
