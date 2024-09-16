@@ -4,15 +4,15 @@ import BaseRoute from '../routes/base.route';
 import { ObjectUtil } from '../utils/object.util';
 import HttpException from '../exceptions/HttpException';
 import BaseService from './base.service';
+import jwt from 'jsonwebtoken';
 
-type UserCreationAttributes<T extends Model> = CreationAttributes<T> & { [key: string]: any };
-
-class UsersService<T extends Model> {
+class UsersService<T extends Model<typeof BaseRoute.userModel>> {
   private userModel: ModelStatic<T>;
-  private baseService: BaseService<T> = new BaseService();
+  private baseService: BaseService<T>;
 
   constructor(userModel: ModelStatic<T>) {
     this.userModel = userModel;
+    this.baseService = new BaseService();
   }
 
   private async hashPassword(password: string): Promise<string> {
@@ -20,26 +20,7 @@ class UsersService<T extends Model> {
     return bcrypt.hash(password, saltRounds);
   }
 
-  public async registerUser(userDatas: Partial<UserCreationAttributes<T>>): Promise<Omit<UserCreationAttributes<T>, typeof BaseRoute.fieldNameUserPassword>> {
-    const passwordField = BaseRoute.fieldNameUserPassword as keyof UserCreationAttributes<T>;
-    const password = userDatas[passwordField] as string | undefined;
-
-    if (!password) {
-      throw new Error('Password is required.');
-    }
-
-    userDatas[passwordField] = await this.hashPassword(password);
-
-    const createdUser = await this.userModel.create(userDatas as UserCreationAttributes<T>);
-    const plainUser = createdUser.get({ plain: true });
-
-    return ObjectUtil.filterKeys(
-      plainUser,
-      [passwordField] as (keyof UserCreationAttributes<T>)[]
-    ) as Omit<UserCreationAttributes<T>, typeof BaseRoute.fieldNameUserPassword>;
-  }
-
-  public async validatePassword(user: T, password: string): Promise<boolean> {
+  private async validatePassword(user: Partial<T>, password: string): Promise<boolean> {
     const isPasswordValid = await bcrypt.compare(password, user[BaseRoute.fieldNameUserPassword]);
     if (!isPasswordValid) {
       throw new HttpException(401, 'Invalid email or password');
@@ -47,10 +28,28 @@ class UsersService<T extends Model> {
     return true;
   }
 
-  public async login(username: string, password: string): Promise<T> {
+  public async registerUser(userDatas: Partial<CreationAttributes<T>>): Promise<Partial<T>> {
+    const passwordField = BaseRoute.fieldNameUserPassword as keyof T;
+    const password = userDatas[passwordField as string] as string | undefined;
+
+    if (!password) throw new Error('Password is required.');
+
+    userDatas[passwordField as string] = await this.hashPassword(password);
+
+    const createdUser = await this.userModel.create(userDatas as CreationAttributes<T>);
+    return ObjectUtil.filterKeys(createdUser, [passwordField]);
+  }
+
+  public async login(username: string, password: string): Promise<string> {
     const user = await this.baseService.findMultipleByFieldName(BaseRoute.userModelName, BaseRoute.fieldNameUsername, username);
+
+    if (!user || user.length === 0) {
+      throw new HttpException(401, 'User not found');
+    }
+
     await this.validatePassword(user[0], password);
-    return user[0]; // Tu peux aussi ajouter la génération de token JWT ici si nécessaire
+    const token = jwt.sign({ username: user[0][BaseRoute.fieldNameUsername] }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '1h' });
+    return token;
   }
 }
 

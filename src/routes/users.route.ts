@@ -5,12 +5,12 @@ import UsersController from '../controllers/users.controller'
 import BaseRoute from './base.route'
 
 class UsersRoute implements Route {
-  public path = '/users'
-  public router = Router()
+  public path = '/users';
+  public router = Router();
   public userController = new UsersController(BaseRoute.userModel);
 
   constructor() {
-    this.initializeRoutes()
+    this.initializeRoutes();
   }
 
   private initializeRoutes() {
@@ -19,4 +19,4 @@ class UsersRoute implements Route {
   }
 }
 
-export default UsersRoute
+export default UsersRoute;
