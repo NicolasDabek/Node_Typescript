@@ -8,10 +8,10 @@ const validationMiddleware = (
   value: 'body' | 'query' | 'params' = 'body',
   skipMissingProperties = false,
   whitelist = true,
-  forbidNonWhitelisted = true,
+  forbidNonWhitelisted = true
 ): RequestHandler => {
   return async (req, res, next) => {
-    const modelName = req.params.model?.toLowerCase() as DtoKeys;
+    const modelName = req.baseUrl.replace('/', '').toLowerCase() as DtoKeys;
     const dtosType = value == 'body' ? createDtos : dtos;
 
     if (dtosType[modelName]) {
