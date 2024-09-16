@@ -5,6 +5,7 @@ import { ObjectUtil } from '../utils/object.util';
 import HttpException from '../exceptions/HttpException';
 import BaseService from './base.service';
 import jwt from 'jsonwebtoken';
+import { DataStoredInToken, TokenData } from '../interfaces/auth.interface';
 
 class UsersService<T extends Model<typeof BaseRoute.userModel>> {
   private userModel: ModelStatic<T>;
@@ -35,12 +36,22 @@ class UsersService<T extends Model<typeof BaseRoute.userModel>> {
     return ObjectUtil.filterKeys(createdUser, [passwordField]);
   }
 
-  public async loginUser(username: string, password: string): Promise<string> {
+  public async loginUser(username: string, password: string): Promise<TokenData> {
     if (!username || !password) throw new HttpException(400, 'Username and password are required');
     const user = await this.baseService.findMultipleByFieldName(BaseRoute.userModelName, BaseRoute.fieldNameUsername, username);
     if (!user || user.length === 0) throw new HttpException(401, 'User not found');
     await this.validatePassword(user[0], password);
-    const token = jwt.sign({ username: user[0][BaseRoute.fieldNameUsername] }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '1h' });
+
+    const datasInToken: DataStoredInToken = {
+      id: user[0][BaseRoute.userModel.primaryKeyAttribute],
+      username: user[0][BaseRoute.fieldNameUsername]
+    };
+
+    const token: TokenData = {
+      token: jwt.sign({ datasInToken }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '1h' }),
+      expiresIn: 3600
+    };
+
     return token;
   }
 }
