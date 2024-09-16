@@ -11,11 +11,11 @@ const validationMiddleware = (
   forbidNonWhitelisted = true,
 ): RequestHandler => {
   return async (req, res, next) => {
-    const tableName = req.params.model?.toLowerCase() as DtoKeys;
+    const modelName = req.params.model?.toLowerCase() as DtoKeys;
     const dtosType = value == 'body' ? createDtos : dtos;
 
-    if (dtosType[tableName]) {
-      const dtoClass = dtosType[tableName] as ClassConstructor<any>;
+    if (dtosType[modelName]) {
+      const dtoClass = dtosType[modelName] as ClassConstructor<any>;
       const dtoInstance = plainToInstance(dtoClass, req[value]);
       const errors: ValidationError[] = await validate(dtoInstance, { skipMissingProperties, whitelist, forbidNonWhitelisted });
 
@@ -40,7 +40,7 @@ const validationMiddleware = (
       }
       next();
     } else {
-      next(new HttpException(401, `No DTO found for model ${tableName}`));
+      next(new HttpException(401, `No DTO found for model ${modelName}`));
     }
   };
 };
