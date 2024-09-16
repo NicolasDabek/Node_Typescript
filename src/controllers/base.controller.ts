@@ -63,9 +63,9 @@ class BaseController {
   static async createData(req: Request, res: Response, next: NextFunction) {
     try {
       const modelName = req.params.model.toString();
-      const datas: Model = req.body;
+      const datas: Partial<Model> = req.body;
       await BaseController.baseService.createData(modelName, datas);
-      const createdData = await (await BaseController.baseService.findLastData(modelName)).dataValues
+      const createdData = await BaseController.baseService.findLastData(modelName);
       res.status(201).json({ datas: createdData });
     } catch (error) {
       next(error instanceof HttpException ? error : new HttpException(500, 'Internal Server Error'));
@@ -78,7 +78,7 @@ class BaseController {
       const dataId = Number(req.params.id);
       const datas: Model = req.body;
       await BaseController.baseService.updateData(modelName, dataId, datas);
-      const updatedData = await (await BaseController.baseService.findLastData(modelName)).dataValues
+      const updatedData = await BaseController.baseService.findLastData(modelName)
       res.status(200).json({ datas: updatedData });
     } catch (error) {
       next(error instanceof HttpException ? error : new HttpException(500, 'Internal Server Error'));
