@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import DB from '../databases';
 import HttpException from '../exceptions/HttpException';
 import { isEmpty } from '../utils/others.util';
-import { CreationAttributes, Model, ModelStatic, where, WhereOptions } from 'sequelize';
+import { CreationAttributes, Model, ModelStatic, WhereOptions } from 'sequelize';
 import BaseRoute from '../routes/base.route';
 
 class BaseService<T extends Model> {
