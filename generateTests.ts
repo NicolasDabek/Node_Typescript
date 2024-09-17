@@ -27,7 +27,7 @@ export function generateFakeData(attributes: any) {
     } else if (attribute.type instanceof DataTypes.INTEGER) {
       instanceData[key] = 1; // Générer un entier
     } else if (attribute.type instanceof DataTypes.BOOLEAN) {
-      instanceData[key] = Math.round(Math.random()); // Un booléen est un tyniInt avec MySQL
+      instanceData[key] = Math.round(Math.random()); // Un booléen est un tinyInt avec MySQL
     } else if (attribute.type instanceof DataTypes.DATE) {
       instanceData[key] = new Date(); // Générer une date actuelle
     } else if (attribute.type instanceof DataTypes.FLOAT || attribute.type instanceof DataTypes.DECIMAL) {
@@ -80,7 +80,7 @@ describe('${className} API', () => {
     const response = await request(app.app)
       .post('/${modelName}')
       .send(restInstanceData);
-    createdData = response.body.datas
+    createdData = response.body.datas;
     expect(response.statusCode).toEqual(201);
     expect(response.body.datas).toHaveProperty('${primaryKey}');
   });
@@ -89,13 +89,13 @@ describe('${className} API', () => {
     const getResponse = await request(app.app)
       .get(\`/${modelName}/1\`)
       .expect(200);
-    expect(getResponse.body.datas).toHaveProperty('id', 1);
+    expect(getResponse.body.datas).toHaveProperty('${primaryKey}', 1);
     expect(getResponse.body.datas).toBeDefined();
   });
 
   it('should update an existing ${modelName}', async () => {
     const updatedData = generateFakeData(${modelName}.rawAttributes);
-    const { id, ...restUpdatedData } = updatedData
+    const { ${primaryKey}, ...restUpdatedData } = updatedData;
     const updateResponse = await request(app.app)
       .put(\`/${modelName}/1\`)
       .send(restUpdatedData);
