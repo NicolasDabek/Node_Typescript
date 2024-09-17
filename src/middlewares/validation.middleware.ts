@@ -11,7 +11,9 @@ const validationMiddleware = (
   forbidNonWhitelisted = true
 ): RequestHandler => {
   return async (req, res, next) => {
-    const modelName = req.baseUrl.replace('/', '').toLowerCase() as DtoKeys;
+    const modelName = req.params.model 
+      ? req.params.model.toLowerCase() as DtoKeys
+      : req.url.split('/')[0].toLowerCase() as DtoKeys;
     const dtosType = value == 'body' ? createDtos : dtos;
 
     if (dtosType[modelName]) {
