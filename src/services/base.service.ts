@@ -15,7 +15,7 @@ class BaseService<T extends Model> {
 
   public async findDataById(modelName: string, dataId: number): Promise<Model> {
     if (isNaN(dataId)) throw new HttpException(400, "Valid data ID is required.");
-    const findData: Model = await this.sequelizeUtil.getModel(modelName)?.findByPk(dataId);
+    const findData: Model = await this.sequelizeUtil.getModel(modelName).findByPk(dataId);
     if (!findData) throw new HttpException(404, "Data not found.");
     return findData;
   }
@@ -24,7 +24,7 @@ class BaseService<T extends Model> {
    * Récupère un seul champ sur toutes les entrées.
    */
   public async findAllDatasOneField(modelName: string, fieldName: string): Promise<T[]> {
-    const options: Object = { where: { deleted: 0 }, attributes: ["id", fieldName] };
+    const options: object = { where: { deleted: 0 }, attributes: ["id", fieldName] };
     return await this.sequelizeUtil.getModel(modelName).findAll(options);
   }
 
@@ -33,18 +33,18 @@ class BaseService<T extends Model> {
    */
   public async findMultipleByFieldName(modelName: string, fieldName: string, fieldVal: string | number): Promise<T[]> {
     if (isEmpty(fieldName) || isEmpty(fieldVal)) throw new HttpException(400, "Field name and value are required.");
-    const options: Object = { where: { [fieldName]: fieldVal } };
+    const options: object = { where: { [fieldName]: fieldVal } };
     const datas = await this.sequelizeUtil.getModel(modelName).findAll(options);
-    if (!datas) throw new HttpException(401, "No datas found.");
+    if (!datas) throw new HttpException(404, "No data found.");
     return datas;
   }
 
   public async findLastData(modelName: string): Promise<Model> {
-    const options: Object = { order: [['id', 'DESC']], limit: 1 };
+    const options: object = { order: [['id', 'DESC']], limit: 1 };
     const lastData = (await this.sequelizeUtil.getModel(modelName).findOne(options)).get({ plain: true});
     if (!lastData) throw new HttpException(404, "No data found.");
     return lastData;
-  };
+  }
 
   public async createData(modelName: string, datas: CreationAttributes<T>): Promise<T> {
     if (BaseRoute.userModelName == modelName) throw new HttpException(403, "Forbidden model.");
@@ -52,7 +52,7 @@ class BaseService<T extends Model> {
     return await this.sequelizeUtil.getModel(modelName).create(datas);
   }
 
-  public async updateData(modelName: string, dataId: number, datas: Partial<Model>): Promise<Model> {
+  public async updateData(modelName: string, dataId: number, datas: Partial<T>): Promise<T> {
     if (isEmpty(datas)) throw new HttpException(400, "Data is required.");
 
     const model = this.sequelizeUtil.getModel(modelName);
@@ -60,23 +60,23 @@ class BaseService<T extends Model> {
     if (!findData) throw new HttpException(404, "Data not found.");
 
     if (BaseRoute.userModelName == modelName && datas[BaseRoute.fieldNameUserPassword]) {
-      datas[BaseRoute.fieldNameUserPassword] = await bcrypt.hash(
+      datas[BaseRoute.fieldNameUserPassword as string] = await bcrypt.hash(
         datas[BaseRoute.fieldNameUserPassword],
         parseInt(process.env.USER_PASSWORD_HASH_SALT, 10)
       );
     }
 
-    const whereCondition: WhereOptions<any> = { [model.primaryKeyAttribute]: dataId };
-    await model.update(datas, { where: whereCondition});
+    const whereCondition: WhereOptions<Record<string, any>> = { [model.primaryKeyAttribute]: dataId };
+    await model.update(datas, { where: whereCondition });
     return await model.findByPk(dataId);
   }
 
   public async deleteData(modelName: string, dataId: number): Promise<Model> {
     if (isNaN(dataId)) throw new HttpException(400, "Valid data ID is required.");
-    const model = this.sequelizeUtil.getModel(modelName)
-    const findData: Model = await model.findByPk(dataId);
+    const model = this.sequelizeUtil.getModel(modelName);
+    const findData: Model | null = await model.findByPk(dataId);
     if (!findData) throw new HttpException(404, "Data not found.");
-    const whereCondition: WhereOptions<any> = { [model.primaryKeyAttribute]: dataId };
+    const whereCondition: WhereOptions<Record<string, any>> = { [model.primaryKeyAttribute]: dataId };
     await model.destroy({ where: whereCondition });
     return findData;
   }
