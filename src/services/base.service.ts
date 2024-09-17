@@ -47,6 +47,7 @@ class BaseService<T extends Model> {
   };
 
   public async createData(modelName: string, datas: CreationAttributes<T>): Promise<T> {
+    if (BaseRoute.userModelName == modelName) throw new HttpException(403, "Forbidden model.");
     if (isEmpty(datas)) throw new HttpException(400, "Data is required.");
     return await this.sequelizeUtil.getModel(modelName).create(datas);
   }
