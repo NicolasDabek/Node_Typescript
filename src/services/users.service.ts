@@ -22,7 +22,7 @@ class UsersService<T extends Model<typeof BaseRoute.userModel>> {
   }
 
   private async validatePassword(user: Partial<T>, password: string): Promise<boolean> {
-    const isPasswordValid = await bcrypt.compare(password, user[BaseRoute.fieldNameUserPassword]);
+    const isPasswordValid = await bcrypt.compare(password, user[BaseRoute.fieldNameUserPassword as keyof T] as string);
     if (!isPasswordValid) throw new HttpException(401, 'Invalid email or password');
     return true;
   }
@@ -38,13 +38,13 @@ class UsersService<T extends Model<typeof BaseRoute.userModel>> {
 
   public async loginUser(username: string, password: string): Promise<TokenData> {
     if (!username || !password) throw new HttpException(400, 'Username and password are required');
-    const user = await this.baseService.findMultipleByFieldName(BaseRoute.userModelName, BaseRoute.fieldNameUsername, username);
-    if (!user || user.length === 0) throw new HttpException(401, 'User not found');
-    await this.validatePassword(user[0], password);
+    const users = await this.baseService.findMultipleByFieldName(BaseRoute.userModelName, BaseRoute.fieldNameUsername, username);
+    if (users.length === 0) throw new HttpException(401, 'User not found');
+    await this.validatePassword(users[0], password);
 
     const datasInToken: DataStoredInToken = {
-      id: user[0][BaseRoute.userModel.primaryKeyAttribute],
-      username: user[0][BaseRoute.fieldNameUsername]
+      id: users[0][BaseRoute.userModel.primaryKeyAttribute] as number,
+      username: users[0][BaseRoute.fieldNameUsername] as string
     };
 
     const token: TokenData = {
