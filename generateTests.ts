@@ -3,10 +3,12 @@ import fs from 'fs/promises';
 import path from 'path';
 import { DataTypes } from 'sequelize';
 
-// Répertoires pour les tests
+// Dossier des tests
 const testDir = path.resolve(__dirname, 'tests');
+// Dossier des tests pour les modèles
 const modelTestDir = path.join(testDir, 'models');
-const modelsDir = path.resolve(__dirname, 'src/models'); // Dossier des modèles
+// Dossier des modèles à utiliser pour générer des tests
+const modelsDir = path.resolve(__dirname, 'src/models');
 
 async function ensureDirectoryExists(dirPath: string) {
   try {
