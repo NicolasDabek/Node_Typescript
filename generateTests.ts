@@ -52,7 +52,7 @@ async function generateModelTests() {
     const testContent = `import request from 'supertest';
 import { app } from '../../src/index';
 import { generateFakeData } from '../../generateTests';
-import { ${modelName} } from '../../src/models/${modelName}'
+import { ${modelName} } from '../../src/models/${modelName}';
 
 describe('${className} API', () => {
   let transaction: any;
@@ -76,7 +76,7 @@ describe('${className} API', () => {
   });
 
   it('should create a new ${modelName}', async () => {
-    const { ${primaryKey}, ...restInstanceData } = instanceData
+    const { ${primaryKey}, ...restInstanceData } = instanceData;
     const response = await request(app.app)
       .post('/${modelName}')
       .send(restInstanceData);
@@ -86,32 +86,34 @@ describe('${className} API', () => {
   });
 
   it('should find a ${modelName} by ID', async () => {
+    const idCreatedData = createdData.${primaryKey};
     const getResponse = await request(app.app)
-      .get(\`/${modelName}/1\`)
+      .get(\`/${modelName}/\${idCreatedData}\`)
       .expect(200);
-    expect(getResponse.body.datas).toHaveProperty('${primaryKey}', 1);
-    expect(getResponse.body.datas).toBeDefined();
+    expect(getResponse.body.datas).toHaveProperty('${primaryKey}', idCreatedData);
+    expect(getResponse.body.datas).toMatchObject(createdData);
   });
 
   it('should update an existing ${modelName}', async () => {
+    const idCreatedData = createdData.${primaryKey};
     const updatedData = generateFakeData(${modelName}.rawAttributes);
     const { ${primaryKey}, ...restUpdatedData } = updatedData;
     const updateResponse = await request(app.app)
-      .put(\`/${modelName}/1\`)
+      .put(\`/${modelName}/\${idCreatedData}\`)
       .send(restUpdatedData);
     expect(updateResponse.statusCode).toEqual(200);
     expect(updateResponse.body.datas).not.toEqual(createdData);
+    createdData = updateResponse.body.datas;
   });
 
   it('should delete an existing ${modelName}', async () => {
-    const deleteResponse = await request(app.app)
-      .delete(\`/${modelName}/1\`)
+    const idCreatedData = createdData.${primaryKey};
+    await request(app.app)
+      .delete(\`/${modelName}/\${idCreatedData}\`)
       .expect(200);
-    expect(deleteResponse.body).toBeDefined();
 
-    // Verify that the record no longer exists
-    const getResponse = await request(app.app)
-      .get(\`/${modelName}/1\`)
+    await request(app.app)
+      .get(\`/${modelName}/\${idCreatedData}\`)
       .expect(404);
   });
 

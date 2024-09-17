@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { app } from '../../src/index';
 import { generateFakeData } from '../../generateTests';
-import { products } from '../../src/models/products'
+import { products } from '../../src/models/products';
 
 describe('Products API', () => {
   let transaction: any;
@@ -25,42 +25,44 @@ describe('Products API', () => {
   });
 
   it('should create a new products', async () => {
-    const { id, ...restInstanceData } = instanceData
+    const { id, ...restInstanceData } = instanceData;
     const response = await request(app.app)
       .post('/products')
       .send(restInstanceData);
-    createdData = response.body.datas
+    createdData = response.body.datas;
     expect(response.statusCode).toEqual(201);
     expect(response.body.datas).toHaveProperty('id');
   });
 
   it('should find a products by ID', async () => {
+    const idCreatedData = createdData.id;
     const getResponse = await request(app.app)
-      .get(`/products/1`)
+      .get(`/products/${idCreatedData}`)
       .expect(200);
-    expect(getResponse.body.datas).toHaveProperty('id', 1);
-    expect(getResponse.body.datas).toBeDefined();
+    expect(getResponse.body.datas).toHaveProperty('id', idCreatedData);
+    expect(getResponse.body.datas).toMatchObject(createdData);
   });
 
   it('should update an existing products', async () => {
+    const idCreatedData = createdData.id;
     const updatedData = generateFakeData(products.rawAttributes);
-    const { id, ...restUpdatedData } = updatedData
+    const { id, ...restUpdatedData } = updatedData;
     const updateResponse = await request(app.app)
-      .put(`/products/1`)
+      .put(`/products/${idCreatedData}`)
       .send(restUpdatedData);
     expect(updateResponse.statusCode).toEqual(200);
     expect(updateResponse.body.datas).not.toEqual(createdData);
+    createdData = updateResponse.body.datas;
   });
 
   it('should delete an existing products', async () => {
-    const deleteResponse = await request(app.app)
-      .delete(`/products/1`)
+    const idCreatedData = createdData.id;
+    await request(app.app)
+      .delete(`/products/${idCreatedData}`)
       .expect(200);
-    expect(deleteResponse.body).toBeDefined();
 
-    // Verify that the record no longer exists
-    const getResponse = await request(app.app)
-      .get(`/products/1`)
+    await request(app.app)
+      .get(`/products/${idCreatedData}`)
       .expect(404);
   });
 
