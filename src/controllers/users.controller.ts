@@ -10,7 +10,7 @@ class UsersController<T extends Model> {
     this.userService = new UsersService(userModel);
   }
 
-  public registerUser = async (req: Request<{}, {}, Partial<CreationAttributes<T>>>, res: Response, next: NextFunction) => {
+  public registerUser = async (req: Request<{}, {}, CreationAttributes<T>>, res: Response, next: NextFunction) => {
     try {
       const datas = req.body;
       if (!datas) throw new HttpException(400, 'User data is required');
