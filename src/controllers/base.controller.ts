@@ -76,7 +76,7 @@ class BaseController {
     try {
       const modelName = req.params.model.toString();
       const dataId = Number(req.params.id);
-      const datas: Model = req.body;
+      const datas: Partial<Model> = req.body;
       await BaseController.baseService.updateData(modelName, dataId, datas);
       const updatedData = await BaseController.baseService.findLastData(modelName)
       res.status(200).json({ datas: updatedData });
