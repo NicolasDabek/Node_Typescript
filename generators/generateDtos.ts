@@ -1,9 +1,9 @@
 import fs from 'fs/promises';
 import path from 'path';
-import DB from './src/databases'; // Assure-toi que ce chemin est correct
+import DB from '../src/databases';
 
-const configPath = path.resolve(__dirname, './generateDtos.config.json');
-const outputDir = path.resolve(__dirname, './src/dtos');
+const configPath = path.resolve(__dirname, './configs/generateDtos.config.json');
+const outputDir = path.resolve(__dirname, '../src/dtos');
 const baseDtoFilePath = path.join(outputDir, 'base.dto.ts')
 const indexFilePath = path.join(outputDir, 'index.ts')
 const createDtoDir = path.join(outputDir, 'createDtos');

@@ -1,6 +1,6 @@
 // /src/interfaces/routeForSwagger.interface.ts
 
-import { DtoKeys, dtos } from '../../dtos';
+import { DtoKeys, dtos } from '../../../src/dtos';
 import { SchemaObject } from './schemaObject.interface';
 
 export interface RouteForSwagger {

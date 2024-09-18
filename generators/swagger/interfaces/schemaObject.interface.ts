@@ -2,8 +2,8 @@
 
 export interface SchemaObject {
   type: string;
-  properties?: Record<string, any>;
-  required?: string[];
+  properties: Record<string, any>;
+  required: string[];
   format?: string;
   example?: any;
   items?: any; // for array type

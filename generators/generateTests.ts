@@ -1,4 +1,4 @@
-import DB from './src/databases';
+import DB from '../src/databases';
 import fs from 'fs/promises';
 import path from 'path';
 import { DataTypes } from 'sequelize';

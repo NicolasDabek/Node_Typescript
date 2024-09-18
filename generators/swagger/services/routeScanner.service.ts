@@ -1,8 +1,8 @@
 // /services/routeScanner.service.ts
 
-import Route from '../../interfaces/routes.interface';
+import Route from '../../../src/interfaces/routes.interface';
 import { RouteForSwagger } from '../interfaces/routeForSwagger.interface';
-import { dtos, DtoKeys } from '../../dtos';
+import { dtos, DtoKeys } from '../../../src/dtos';
 
 export class RouteScannerService {
   public static scanRoutes(routes: Route[]): RouteForSwagger[] {

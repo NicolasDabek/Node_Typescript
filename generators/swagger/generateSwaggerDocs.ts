@@ -1,12 +1,12 @@
-// /src/generateSwaggerDocs.ts
+// /generators/swagger/generateSwaggerDocs.ts
 
 import { RouteScannerService } from './services/routeScanner.service';
 import { SwaggerGeneratorService } from './services/swaggerGenerator.service';
 import { FileWriterService } from './services/fileWriter.service';
-import { routes } from '../routes';
+import { routes } from '../../src/routes';
 import { SwaggerDoc } from './interfaces/swaggerDoc.interface';
 import { ParametersBuilder } from './builders/parameters.builder';
-import Route from '../interfaces/routes.interface';
+import Route from '../../src/interfaces/routes.interface';
 
 export function generateSwaggerDocs(routes: Route[]) : SwaggerDoc {
   const routesForSwagger = RouteScannerService.scanRoutes(routes);
