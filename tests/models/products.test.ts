@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { app } from '../../src/index';
-import { generateFakeData } from '../../generateTests';
+import { generateFakeData } from '../../generators/generateTests';
 import { products } from '../../src/models/products';
 
 describe('Products API', () => {

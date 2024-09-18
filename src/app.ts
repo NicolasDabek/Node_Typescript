@@ -14,7 +14,7 @@ import session from "express-session"
 import { Server } from 'http';
 import path from 'path';
 import fs from "fs"
-import { SwaggerDoc } from './swagger/interfaces/swaggerDoc.interface';
+import { SwaggerDoc } from '../generators/swagger/interfaces/swaggerDoc.interface';
 
 class App {
   public app: express.Application;
