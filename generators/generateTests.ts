@@ -4,11 +4,11 @@ import path from 'path';
 import { DataTypes } from 'sequelize';
 
 // Dossier des tests
-const testDir = path.resolve(__dirname, 'tests');
+const testDir = path.resolve(__dirname, '../tests');
 // Dossier des tests pour les modèles
 const modelTestDir = path.join(testDir, 'models');
 // Dossier des modèles à utiliser pour générer des tests
-const modelsDir = path.resolve(__dirname, 'src/models');
+const modelsDir = path.resolve(__dirname, '../src/models');
 
 async function ensureDirectoryExists(dirPath: string) {
   try {
