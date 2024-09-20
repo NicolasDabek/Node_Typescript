@@ -1,17 +1,17 @@
 import { Request } from 'express';
-import { users } from '../models/users';
+import { Model } from 'sequelize';
 
 export interface DataStoredInToken {
-  id: number
-  username: string
-  role?: number
+  id: number;
+  username: string;
+  role?: number;
 }
 
 export interface TokenData {
-  token: string
-  expiresIn: number
+  token: string;
+  expiresIn: number;
 }
 
-export interface RequestWithUser extends Request {
-  user: users
+export interface RequestWithUser<T extends Model> extends Request {
+  user: T;
 }

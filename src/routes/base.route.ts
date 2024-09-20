@@ -6,6 +6,7 @@ import authMiddleware from '../middlewares/auth.middleware'
 import { RequestWithUser } from '../interfaces/auth.interface'
 import DB from '../databases'
 import { ClassUtil } from '../utils/class.util'
+import { Model } from 'sequelize'
 
 class BaseRoute implements Route {
   public path = '/:model';
@@ -16,7 +17,7 @@ class BaseRoute implements Route {
   public static fieldNameUserPassword = 'password';
   public static relTables = [];
   private activateAuthMiddleware = false;
-  private checkAuth = (req: RequestWithUser<typeof BaseRoute.userModel>, res: Response, next: NextFunction) => next();
+  private checkAuth = (req: RequestWithUser<Model>, res: Response, next: NextFunction) => next();
 
   constructor() {
     if(this.activateAuthMiddleware) this.checkAuth = authMiddleware;
