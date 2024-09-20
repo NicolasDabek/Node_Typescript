@@ -11,15 +11,12 @@ class BaseRoute implements Route {
   public path = '/:model';
   public router = Router();
   public static userModel = DB.Models.users;
-  // Used in BaseService.createData()
   public static userModelName = ClassUtil.getClassName(this.userModel);
-  // Used in UsersService.login()
   public static fieldNameUsername = 'username';
-  // Used in BaseService.createData()
   public static fieldNameUserPassword = 'password';
   public static relTables = [];
   private activateAuthMiddleware = false;
-  private checkAuth = (req: RequestWithUser, res: Response, next: NextFunction) => next();
+  private checkAuth = (req: RequestWithUser<typeof BaseRoute.userModel>, res: Response, next: NextFunction) => next();
 
   constructor() {
     if(this.activateAuthMiddleware) this.checkAuth = authMiddleware;
