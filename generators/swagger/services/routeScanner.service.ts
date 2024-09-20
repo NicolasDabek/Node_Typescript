@@ -16,7 +16,7 @@ export class RouteScannerService {
 
           // Dynamic model detection
           if (path.includes('/:model')) {
-            Object.keys(dtos).forEach((modelName: keyof typeof dtos) => {
+            Object.keys(dtos).forEach((modelName) => {
               routesPushed.push({
                 method: method,
                 path: path.replace(':model', modelName),
