@@ -53,7 +53,7 @@ async function generateModelTests() {
 
     const testContent = `import request from 'supertest';
 import { app } from '../../src/index';
-import { generateFakeData } from '../../generateTests';
+import { generateFakeData } from '../../generators/generateTests';
 import { ${modelName} } from '../../src/models/${modelName}';
 
 describe('${className} API', () => {
