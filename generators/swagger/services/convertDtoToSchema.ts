@@ -20,47 +20,47 @@ export function convertDtoToSchema(dtoClass: any): SchemaObject {
     }
 
     // Handling different types of validations
-    switch (meta.constraintCls.name) {
-      case 'IsString':
+    switch (meta.name) {
+      case 'isString':
         swaggerSchema.properties![propertyName].type = 'string';
         break;
-      case 'IsEmail':
+      case 'isEmail':
         swaggerSchema.properties![propertyName].type = 'string';
         swaggerSchema.properties![propertyName].format = 'email';
         break;
-      case 'IsNumber':
+      case 'isNumber':
         swaggerSchema.properties![propertyName].type = 'integer';
         break;
-      case 'IsDate':
+      case 'isDate':
         swaggerSchema.properties![propertyName].type = 'string';
         swaggerSchema.properties![propertyName].format = 'date-time';
         break;
-      case 'IsBoolean':
+      case 'isBoolean':
         swaggerSchema.properties![propertyName].type = 'boolean';
         break;
-      case 'IsUUID':
+      case 'isUUID':
         swaggerSchema.properties![propertyName].type = 'string';
         swaggerSchema.properties![propertyName].format = 'uuid';
         break;
-      case 'IsArray':
+      case 'isArray':
         swaggerSchema.properties![propertyName].type = 'array';
         swaggerSchema.properties![propertyName].items = { type: 'string' }; // default to string array
         break;
-      case 'IsUrl':
+      case 'isUrl':
         swaggerSchema.properties![propertyName].type = 'string';
         swaggerSchema.properties![propertyName].format = 'url';
         break;
-      case 'IsEnum':
+      case 'isEnum':
         swaggerSchema.properties![propertyName].enum = constraints;
         break;
-      case 'IsOptional':
+      case 'isOptional':
         // Remove from required if it's optional
         const index = swaggerSchema.required!.indexOf(propertyName);
         if (index > -1) {
           swaggerSchema.required!.splice(index, 1);
         }
         break;
-      case 'Length':
+      case 'length':
         if (constraints[0] !== undefined) {
           swaggerSchema.properties![propertyName].minLength = constraints[0];
         }
@@ -68,37 +68,37 @@ export function convertDtoToSchema(dtoClass: any): SchemaObject {
           swaggerSchema.properties![propertyName].maxLength = constraints[1];
         }
         break;
-      case 'Min':
+      case 'min':
         swaggerSchema.properties![propertyName].minimum = constraints[0];
         break;
-      case 'Max':
+      case 'max':
         swaggerSchema.properties![propertyName].maximum = constraints[0];
         break;
-      case 'IsNotEmpty':
+      case 'isNotEmpty':
         if (!swaggerSchema.required!.includes(propertyName)) {
           swaggerSchema.required!.push(propertyName);
         }
         break;
-      case 'IsPositive':
+      case 'isPositive':
         swaggerSchema.properties![propertyName].minimum = 1;
         break;
-      case 'IsNegative':
+      case 'isNegative':
         swaggerSchema.properties![propertyName].maximum = -1;
         break;
-      case 'MinLength':
+      case 'minLength':
         swaggerSchema.properties![propertyName].minLength = constraints[0];
         break;
-      case 'MaxLength':
+      case 'maxLength':
         swaggerSchema.properties![propertyName].maxLength = constraints[0];
         break;
       case 'Matches':
         swaggerSchema.properties![propertyName].pattern = constraints[0].toString();
         break;
-      case 'IsISO8601':
+      case 'isISO8601':
         swaggerSchema.properties![propertyName].type = 'string';
         swaggerSchema.properties![propertyName].format = 'date-time';
         break;
-      case 'IsIn':
+      case 'isIn':
         swaggerSchema.properties![propertyName].enum = constraints;
         break;
     }
