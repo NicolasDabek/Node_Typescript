@@ -7,7 +7,7 @@ import * as yaml from 'js-yaml';
 export class FileWriterService {
   public static writeFile(fileName: string, data: any): void {
     // Déterminez le chemin du dossier et du fichier
-    const dirPath = path.join(__dirname, '../../swaggerDocs');
+    const dirPath = path.join(__dirname, '../../../dist/src/swaggerDocs');
     const filePath = path.join(dirPath, fileName);
 
     // Vérifiez si le dossier existe, sinon créez-le
