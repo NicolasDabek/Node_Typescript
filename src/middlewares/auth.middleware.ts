@@ -1,9 +1,9 @@
 import { NextFunction, Response } from 'express'
 import config from 'config'
 import jwt from 'jsonwebtoken'
-import DB from '../databases'
 import HttpException from '../exceptions/HttpException'
 import { DataStoredInToken, RequestWithUser } from '../interfaces/auth.interface'
+import BaseRoute from '../routes/base.route'
 
 const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFunction) => {
   try {
@@ -16,7 +16,7 @@ const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFun
       const secretKey: string = config.get('secretKey')
       const tokenVerified = jwt.verify(token, secretKey) as DataStoredInToken
       const userId = tokenVerified.id
-      const findedUser = await DB.Models.users.findByPk(userId)
+      const findedUser = await BaseRoute.userModel.findByPk(userId)
 
       if(findedUser) {
         req.user = findedUser
