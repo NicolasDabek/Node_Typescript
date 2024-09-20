@@ -84,7 +84,7 @@
     "test": "jest",
     "gen-models": "npx ts-node generators/generateModels.ts",
     "gen-dtos": "npx ts-node generators/generateDtos.ts",
-    "gen-docs": "npm run build && node dist/src/swagger/generateSwaggerDocs.js",
+    "gen-docs": "npm run build && npx ts-node generators/swagger/generateSwaggerDocs.ts",
     "gen-tests": "npx ts-node generators/generateTests.ts",
     "gen-all": "npm run gen-models && npm run gen-dtos && npm run gen-docs && npm run gen-tests"
   },
