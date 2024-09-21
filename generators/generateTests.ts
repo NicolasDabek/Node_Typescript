@@ -44,13 +44,23 @@ async function generateModelTests() {
   await ensureDirectoryExists(modelTestDir);
 
   const modelFiles = (await fs.readdir(modelsDir)).filter(file => file.endsWith('.ts') && file !== 'init-models.ts');
+  let beforeAndAfterAllAlreadyUsed = false;
 
   for (const modelFile of modelFiles) {
     const modelName = path.basename(modelFile, '.ts');
     const className = modelName.charAt(0).toUpperCase() + modelName.slice(1);
     const testFilePath = path.join(modelTestDir, `${modelName}.test.ts`);
     const primaryKey = Object.keys(DB.Models[modelName].rawAttributes).find(key => DB.Models[modelName].rawAttributes[key].primaryKey);
-
+    const beforeAll = `
+  beforeAll(async () => {
+    await app.dbSequelize.sequelize.sync({ force: true });
+  });
+`
+    const afterAll = `
+  afterAll(async () => {
+    await app.dbSequelize.sequelize.close();
+  });
+`
     const testContent = `import request from 'supertest';
 import { app } from '../../src/index';
 import { generateFakeData } from '../../generators/generateTests';
@@ -60,11 +70,7 @@ describe('${className} API', () => {
   let transaction: any;
   const instanceData = generateFakeData(${modelName}.rawAttributes);
   let createdData: ${modelName};
-
-  beforeAll(async () => {
-    await app.dbSequelize.sequelize.sync({ force: true });
-  });
-
+  ${!beforeAndAfterAllAlreadyUsed ? beforeAll : ''}
   beforeEach(async () => {
     transaction = await app.dbSequelize.sequelize.transaction();
   });
@@ -72,11 +78,7 @@ describe('${className} API', () => {
   afterEach(async () => {
     await transaction.rollback();
   });
-
-  afterAll(async () => {
-    await app.dbSequelize.sequelize.close();
-  });
-
+  ${!beforeAndAfterAllAlreadyUsed ? (() => { beforeAndAfterAllAlreadyUsed = true; return afterAll })() : ''}
   it('should create a new ${modelName}', async () => {
     const { ${primaryKey}, ...restInstanceData } = instanceData;
     const response = await request(app.app)
