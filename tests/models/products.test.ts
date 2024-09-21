@@ -7,7 +7,7 @@ describe('Products API', () => {
   let transaction: any;
   const instanceData = generateFakeData(products.rawAttributes);
   let createdData: products;
-
+  
   beforeAll(async () => {
     await app.dbSequelize.sequelize.sync({ force: true });
   });
@@ -19,7 +19,7 @@ describe('Products API', () => {
   afterEach(async () => {
     await transaction.rollback();
   });
-
+  
   afterAll(async () => {
     await app.dbSequelize.sequelize.close();
   });

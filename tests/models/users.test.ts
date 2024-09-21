@@ -7,11 +7,7 @@ describe('Users API', () => {
   let transaction: any;
   const instanceData = generateFakeData(users.rawAttributes);
   let createdData: users;
-
-  beforeAll(async () => {
-    await app.dbSequelize.sequelize.sync({ force: true });
-  });
-
+  
   beforeEach(async () => {
     transaction = await app.dbSequelize.sequelize.transaction();
   });
@@ -19,11 +15,7 @@ describe('Users API', () => {
   afterEach(async () => {
     await transaction.rollback();
   });
-
-  afterAll(async () => {
-    await app.dbSequelize.sequelize.close();
-  });
-
+  
   it('should create a new users', async () => {
     const { id, ...restInstanceData } = instanceData;
     const response = await request(app.app)
