@@ -31,13 +31,36 @@ export function generateFakeData(attributes: any) {
     } else if (attribute.type instanceof DataTypes.BOOLEAN) {
       instanceData[key] = Math.round(Math.random()); // Un booléen est un tinyInt avec MySQL
     } else if (attribute.type instanceof DataTypes.DATE) {
-      instanceData[key] = new Date(); // Générer une date actuelle
+      instanceData[key] = new Date(); // Générer la date actuelle
     } else if (attribute.type instanceof DataTypes.FLOAT || attribute.type instanceof DataTypes.DECIMAL) {
       instanceData[key] = parseFloat((Math.random() * 100).toFixed(2)); // Générer un float avec précision
     }
-    // Ajouter plus de conditions selon les types d'attributs
   }
   return instanceData;
+}
+
+export async function generateRelatedData(model: any) {
+  const associations = model.associations;
+  const relatedData: { [key: string]: any } = {};
+
+  for (const associationName in associations) {
+    const association = associations[associationName];
+    
+    if (association.associationType === 'BelongsTo' || association.associationType === 'HasOne') {
+      const relatedModel = association.target;
+      const relatedInstance = await relatedModel.create(generateFakeData(relatedModel.rawAttributes));
+      relatedData[association.foreignKey] = relatedInstance[relatedModel.primaryKeyAttribute];
+    }
+    
+    // Pour les relations "HasMany", tu peux envisager de créer plusieurs instances liées si nécessaire.
+    if (association.associationType === 'HasMany') {
+      const relatedModel = association.target;
+      const relatedInstances = await relatedModel.bulkCreate([generateFakeData(relatedModel.rawAttributes)]);
+      relatedData[association.foreignKey] = relatedInstances.map((inst: any) => inst[relatedModel.primaryKeyAttribute]);
+    }
+  }
+
+  return relatedData;
 }
 
 async function generateModelTests() {
@@ -55,15 +78,15 @@ async function generateModelTests() {
   beforeAll(async () => {
     await app.dbSequelize.sequelize.sync({ force: true });
   });
-`
+`;
     const afterAll = `
   afterAll(async () => {
     await app.dbSequelize.sequelize.close();
   });
-`
+`;
     const testContent = `import request from 'supertest';
 import { app } from '../../src/index';
-import { generateFakeData } from '../../generators/generateTests';
+import { generateFakeData, generateRelatedData } from '../../generators/generateTests';
 import { ${modelName} } from '../../src/models/${modelName}';
 
 describe('${className} API', () => {
@@ -80,6 +103,7 @@ describe('${className} API', () => {
   });
   ${!beforeAndAfterAllAlreadyUsed ? (() => { beforeAndAfterAllAlreadyUsed = true; return afterAll })() : ''}
   it('should create a new ${modelName}', async () => {
+    const relatedData = await generateRelatedData(${modelName});
     const { ${primaryKey}, ...restInstanceData } = instanceData;
     const response = await request(app.app)
       .post('/${modelName}')
