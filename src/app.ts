@@ -18,19 +18,16 @@ import { SwaggerDoc } from '../generators/swagger/interfaces/swaggerDoc.interfac
 
 class App {
   public app: express.Application;
-  public routes: Routes[]
+  public routes: Routes[];
   public port: string | number;
   public env: string;
   public dbSequelize = DB;
   public static server: Server;
 
-  constructor(routes: Routes[], generateSwaggerDocs: boolean = false) {
-    this.app = express();
-    this.routes = routes;
-    this.port = process.env.PORT || 3000;
-    this.env = process.env.NODE_ENV || 'development';
+  constructor(routes: Routes[], connectDatabase: boolean = true) {
+    this.configApp(routes);
 
-    if(!generateSwaggerDocs) {
+    if (connectDatabase) {
       this.connectToDatabase();
     }
 
@@ -46,22 +43,25 @@ class App {
       return;
     }
 
-    App.server = this.app.listen(this.port, () => {
-      logger.info(`ENV: ${this.env}`);
-      logger.info(`App listening on port ${this.port}`);
-    });
-
-    App.server.on('error', (error: any) => {
+    try {
+      App.server = this.app.listen(this.port, () => {
+        logger.info(`ENV: ${this.env}`);
+        logger.info(`App listening on port ${this.port}`);
+      });
+    } catch (error: any) {
       if (error.code === 'EADDRINUSE') {
         logger.error(`Port ${this.port} is already in use`);
       } else {
-        console.error(`Server error: ${error}`);
+        logger.error(`Server error: ${error.message || error}`);
       }
-    });
+    }
   }
 
-  public getServer() {
-    return this.app;
+  private configApp(routes: Routes[]) {
+    this.app = express();
+    this.routes = routes;
+    this.port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+    this.env = process.env.NODE_ENV || 'development';
   }
 
   private connectToDatabase() {
@@ -69,26 +69,29 @@ class App {
   }
 
   private initializeMiddlewares() {
-    if (process.env.NODE_ENV === 'production') {
-      this.app.use(morgan('combined', { stream }))
-      this.app.use(cors({ origin: process.env.DOMAIN_NAME, credentials: true }))
-    } else {
-      this.app.use(morgan('dev', { stream }))
-      this.app.use(cors({ origin: true, credentials: true }))
-    }
-  
-    this.app.use(hpp())
-    this.app.use(helmet())
+    // Gestion des logs et du CORS en fonction de l'environnement
+    const morganFormat = this.env === 'production' ? 'combined' : 'dev';
+    const corsOptions = {
+      origin: this.env === 'production' ? process.env.DOMAIN_NAME : true,
+      credentials: true,
+    };
+
+    this.app.use(morgan(morganFormat, { stream }));
+    this.app.use(cors(corsOptions));
+
+    // Middlewares de sécurité et utilitaires
+    this.app.use(hpp());
+    this.app.use(helmet());
     this.app.use(session({
-      secret: "mysecret",
+      secret: process.env.SECRET_SESSION || "mysecret",
       resave: true,
       saveUninitialized: true
-    }))
-    this.app.use(compression())
-    //this.app.use(csurf())
-    this.app.use(express.json())
-    this.app.use(express.urlencoded({ extended: true }))
-    this.app.use(cookieParser())
+    }));
+    this.app.use(compression());
+    // this.app.use(csurf());
+    this.app.use(express.json());
+    this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(cookieParser());
   }
 
   private initializeRoutes(routes: Routes[]) {
@@ -100,35 +103,29 @@ class App {
   private initializeSwagger() {
     const swaggerDocsDir = path.resolve(__dirname, 'swaggerDocs');
     const swaggerDoc: SwaggerDoc = {
-        openapi: '3.0.0',
-        info: { title: 'My API', version: '1.0.0' },
-        paths: {},
-        components: { schemas: {} },
+      openapi: '3.0.0',
+      info: { title: 'My API', version: '1.0.0' },
+      paths: {},
+      components: { schemas: {} },
     };
 
-    // Vérifier si le dossier existe
     if (fs.existsSync(swaggerDocsDir)) {
-        const files = fs.readdirSync(swaggerDocsDir);
-        
-        // Boucle sur tous les fichiers JSON dans le dossier swaggerDocs
-        files.forEach(file => {
-            if (file.endsWith('.json')) {
-                const modelDocPath = path.join(swaggerDocsDir, file);
-                const modelDoc = JSON.parse(fs.readFileSync(modelDocPath, 'utf8'));
+      const files = fs.readdirSync(swaggerDocsDir);
+      files.forEach(file => {
+        if (file.endsWith('.json')) {
+          const modelDocPath = path.join(swaggerDocsDir, file);
+          const modelDoc = JSON.parse(fs.readFileSync(modelDocPath, 'utf8'));
 
-                // Combiner les paths et components des modèles dans un seul objet
-                swaggerDoc.paths = { ...swaggerDoc.paths, ...modelDoc.paths };
-                swaggerDoc.components.schemas = { ...swaggerDoc.components.schemas, ...modelDoc.components.schemas };
-            }
-        });
+          swaggerDoc.paths = { ...swaggerDoc.paths, ...modelDoc.paths };
+          swaggerDoc.components.schemas = { ...swaggerDoc.components.schemas, ...modelDoc.components.schemas };
+        }
+      });
 
-        // Configuration de Swagger UI avec le document combiné
-        this.app.use('/swagger/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+      this.app.use('/swagger/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
     } else {
-        logger.error('Swagger documentation directory not found. Please ensure the directory exists.');
+      logger.error('Swagger documentation directory not found. Please ensure the directory exists.');
     }
-}
-
+  }
 
   private initializeErrorHandling() {
     this.app.use(errorMiddleware);
