@@ -94,9 +94,6 @@ ${fields}
             tsType = 'string';
             validator = '@IsEmail()';
             break;
-          default:
-            tsType = 'any';
-            break;
         }
 
         if (config.includePrimaryKeys || !primaryKeys.has(attributeName)) {
