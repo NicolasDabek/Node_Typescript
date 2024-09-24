@@ -101,15 +101,21 @@ class App {
   }
 
   private initializeSwagger() {
-    const swaggerDocsDir = path.resolve(__dirname, 'swaggerDocs');
-    const swaggerDoc: SwaggerDoc = {
-      openapi: '3.0.0',
-      info: { title: 'My API', version: '1.0.0' },
-      paths: {},
-      components: { schemas: {} },
-    };
+    const swaggerDocsDirFromTs = path.resolve(__dirname, '../dist/src/swaggerDocs');
+    const swaggerDocsDirFromJs = path.resolve(__dirname, 'swaggerDocs');
+    let swaggerDocsDir: string;
 
-    if (fs.existsSync(swaggerDocsDir)) {
+    if(fs.existsSync(swaggerDocsDirFromTs)) swaggerDocsDir = swaggerDocsDirFromTs;
+    else if(fs.existsSync(swaggerDocsDirFromJs)) swaggerDocsDir = swaggerDocsDirFromJs;
+
+    if (swaggerDocsDir) {
+      const swaggerDoc: SwaggerDoc = {
+        openapi: '3.0.0',
+        info: { title: 'My API', version: '1.0.0' },
+        paths: {},
+        components: { schemas: {} },
+      };
+
       const files = fs.readdirSync(swaggerDocsDir);
       files.forEach(file => {
         if (file.endsWith('.json')) {
