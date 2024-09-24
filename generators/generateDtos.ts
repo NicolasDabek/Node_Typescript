@@ -71,6 +71,7 @@ ${fields}
         switch (attribute.type.constructor.name) {
           case 'STRING':
           case 'TEXT':
+          case 'ENUM':
             tsType = 'string';
             validator = '@IsString()';
             break;
