@@ -1,15 +1,14 @@
-import { Request, Response, NextFunction } from "express";
-import BaseService from "../services/base.service";
-import HttpException from "../exceptions/HttpException";
-import { Model } from "sequelize";
+import { Request, Response, NextFunction } from 'express';
+import BaseService from '../services/base.service';
+import HttpException from '../exceptions/HttpException';
+import { Model } from 'sequelize';
 
 class BaseController {
   static baseService = new BaseService();
 
   static async getAllDatas(req: Request, res: Response, next: NextFunction) {
     try {
-      const modelName = req.params.model.toString();
-      const findAllDatas: Model[] = await BaseController.baseService.findAllDatas(modelName);
+      const findAllDatas: Model[] = await BaseController.baseService.findAllDatas(req.params.model);
       res.status(200).json({ datas: findAllDatas });
     } catch (error) {
       next(error instanceof HttpException ? error : new HttpException(500, 'Internal Server Error'));
@@ -18,9 +17,7 @@ class BaseController {
 
   static async getDataById(req: Request, res: Response, next: NextFunction) {
     try {
-      const modelName = req.params.model.toString();
-      const dataId = Number(req.params.id);
-      const findOneData: Model = await BaseController.baseService.findDataById(modelName, dataId);
+      const findOneData: Model = await BaseController.baseService.findDataById(req.params.model, Number(req.params.id));
       res.status(200).json({ datas: findOneData });
     } catch (error) {
       next(error instanceof HttpException ? error : new HttpException(500, 'Internal Server Error'));
@@ -29,9 +26,7 @@ class BaseController {
 
   static async getAllDataOneField(req: Request, res: Response, next: NextFunction) {
     try {
-      const modelName = req.params.model.toString();
-      const fieldName = req.params.fieldName.toString();
-      const findAllDatas: Model[] = await BaseController.baseService.findAllDatasOneField(modelName, fieldName);
+      const findAllDatas: Model[] = await BaseController.baseService.findAllDatasOneField(req.params.model, req.params.fieldName);
       res.status(200).json({ datas: findAllDatas });
     } catch (error) {
       next(error instanceof HttpException ? error : new HttpException(500, 'Internal Server Error'));
@@ -40,10 +35,9 @@ class BaseController {
 
   static async getMultipleByFieldVal(req: Request, res: Response, next: NextFunction) {
     try {
-      const modelName = req.params.model.toString();
-      const fieldName = req.params.fieldName.toString();
-      const fieldVal = Number(req.params.fieldVal);
-      const findMultipleDatas: Model[] = await BaseController.baseService.findMultipleByFieldName(modelName, fieldName, fieldVal);
+      const raw = req.params.fieldVal;
+      const fieldVal = raw !== undefined && raw !== '' && !isNaN(Number(raw)) && String(Number(raw)) === raw ? Number(raw) : raw;
+      const findMultipleDatas: Model[] = await BaseController.baseService.findMultipleByFieldName(req.params.model, req.params.fieldName, fieldVal);
       res.status(200).json({ datas: findMultipleDatas });
     } catch (error) {
       next(error instanceof HttpException ? error : new HttpException(500, 'Internal Server Error'));
@@ -52,8 +46,7 @@ class BaseController {
 
   static async getLastData(req: Request, res: Response, next: NextFunction) {
     try {
-      const modelName = req.params.model.toString();
-      const findLastData: Model = await BaseController.baseService.findLastData(modelName);
+      const findLastData: Model = await BaseController.baseService.findLastData(req.params.model);
       res.status(200).json({ datas: findLastData });
     } catch (error) {
       next(error instanceof HttpException ? error : new HttpException(500, 'Internal Server Error'));
@@ -62,10 +55,7 @@ class BaseController {
 
   static async createData(req: Request, res: Response, next: NextFunction) {
     try {
-      const modelName = req.params.model.toString();
-      const datas: Partial<Model> = req.body;
-      await BaseController.baseService.createData(modelName, datas);
-      const createdData = await BaseController.baseService.findLastData(modelName);
+      const createdData = await BaseController.baseService.createData(req.params.model, req.body);
       res.status(201).json({ datas: createdData });
     } catch (error) {
       next(error instanceof HttpException ? error : new HttpException(500, 'Internal Server Error'));
@@ -74,11 +64,7 @@ class BaseController {
 
   static async updateData(req: Request, res: Response, next: NextFunction) {
     try {
-      const modelName = req.params.model.toString();
-      const dataId = Number(req.params.id);
-      const datas: Partial<Model> = req.body;
-      await BaseController.baseService.updateData(modelName, dataId, datas);
-      const updatedData = await BaseController.baseService.findLastData(modelName)
+      const updatedData = await BaseController.baseService.updateData(req.params.model, Number(req.params.id), req.body);
       res.status(200).json({ datas: updatedData });
     } catch (error) {
       next(error instanceof HttpException ? error : new HttpException(500, 'Internal Server Error'));
@@ -87,9 +73,7 @@ class BaseController {
 
   static async deleteData(req: Request, res: Response, next: NextFunction) {
     try {
-      const modelName = req.params.model.toString();
-      const dataId = Number(req.params.id);
-      const deletedData = await BaseController.baseService.deleteData(modelName, dataId);
+      const deletedData = await BaseController.baseService.deleteData(req.params.model, Number(req.params.id));
       res.status(200).json({ datas: deletedData });
     } catch (error) {
       next(error instanceof HttpException ? error : new HttpException(500, 'Internal Server Error'));
