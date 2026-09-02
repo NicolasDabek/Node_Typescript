@@ -1,12 +1,18 @@
-process.env['NODE_CONFIG_DIR'] = __dirname + '/config';
+import path from 'path';
+process.env['NODE_CONFIG_DIR'] = path.resolve(process.cwd(), 'config');
 
 import 'dotenv/config';
 import App from './app';
-import { validateEnv } from './utils/validateEnv.util'
-import { routes } from './routes'
+import { validateEnv } from './utils/validateEnv.util';
+import { routes } from './routes';
 
-validateEnv()
+validateEnv();
 
-export const app = new App(routes)
+export const app = new App(routes, false);
 
-app.listen()
+(async () => {
+  if (process.env.NODE_ENV !== 'test') {
+    await app.connectToDatabase();
+    app.listen();
+  }
+})();

@@ -1,22 +1,20 @@
+import path from 'path';
+process.env['NODE_CONFIG_DIR'] = process.env['NODE_CONFIG_DIR'] || path.resolve(process.cwd(), 'config');
+
 import config from 'config';
 import { Sequelize } from 'sequelize';
 import { dbConfig } from '../interfaces/db.interface';
 import { logger } from '../utils/logger.util';
 import { initModels } from '../models/init-models';
 
-let configDB
-try {
-  configDB = config.get("dbConfig")
-} catch (error) {
-  console.error(error)
-}
+const configDB = config.get('dbConfig') as dbConfig;
+const { host, user, password, database, pool, port }: dbConfig = configDB;
 
-const { host, user, password, database, pool, port }: dbConfig = configDB
 const sequelize = new Sequelize(database, user, password, {
-  host: host,
-  dialect: 'mysql',
+  host,
+  dialect: (process.env.DB_DIALECT as any) || 'mysql',
   timezone: '+01:00',
-  port: port,
+  port,
   define: {
     charset: 'utf8mb4',
     collate: 'utf8mb4_general_ci',
@@ -27,18 +25,16 @@ const sequelize = new Sequelize(database, user, password, {
     max: pool.max,
   },
   logQueryParameters: process.env.NODE_ENV === 'development',
-  logging: (query, time) => {
-    logger.info(time + 'ms' + ' ' + query);
+  logging: process.env.NODE_ENV === 'test' ? false : (query, time) => {
+    logger.info(`${time}ms ${query}`);
   },
-  benchmark: true,
+  benchmark: process.env.NODE_ENV !== 'test',
 });
-
-sequelize.authenticate();
 
 const DB = {
   Models: initModels(sequelize),
-  sequelize, // connection instance (RAW queries)
-  Sequelize, // library
+  sequelize,
+  Sequelize,
 };
 
 export default DB;

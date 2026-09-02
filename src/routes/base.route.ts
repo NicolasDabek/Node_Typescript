@@ -1,27 +1,25 @@
-import { NextFunction, Response, Router } from 'express'
-import BaseControler from '../controllers/base.controller'
-import Route from '../interfaces/routes.interface'
-import validationMiddleware from '../middlewares/validation.middleware'
-import authMiddleware from '../middlewares/auth.middleware'
-import { RequestWithUser } from '../interfaces/auth.interface'
-import DB from '../databases'
-import { ClassUtil } from '../utils/class.util'
-import { Model } from 'sequelize'
+import { NextFunction, Response, Router } from 'express';
+import BaseControler from '../controllers/base.controller';
+import Route from '../interfaces/routes.interface';
+import validationMiddleware from '../middlewares/validation.middleware';
+import authMiddleware from '../middlewares/auth.middleware';
+import { RequestWithUser } from '../interfaces/auth.interface';
+import DB from '../databases';
+import { Model } from 'sequelize';
 
 class BaseRoute implements Route {
   public path = '/:model';
   public router = Router();
   public static userModel = DB.Models.users;
-  public static userModelName = ClassUtil.getClassName(this.userModel);
+  public static userModelName = 'users';
   public static fieldNameUsername = 'username';
   public static fieldNameUserPassword = 'password';
-  public static relTables = [];
-  private activateAuthMiddleware = false;
+  public static relTables: string[] = [];
+  private activateAuthMiddleware = process.env.GENERIC_CRUD_AUTH === 'true';
   private checkAuth = (req: RequestWithUser<Model>, res: Response, next: NextFunction) => next();
 
   constructor() {
-    if(this.activateAuthMiddleware) this.checkAuth = authMiddleware;
-
+    if (this.activateAuthMiddleware) this.checkAuth = authMiddleware;
     this.initializeRoutes();
   }
 
@@ -36,4 +34,4 @@ class BaseRoute implements Route {
   }
 }
 
-export default BaseRoute
+export default BaseRoute;
