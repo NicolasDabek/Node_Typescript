@@ -5,45 +5,48 @@ import HttpException from '../exceptions/HttpException';
 import { dtos, DtoKeys, createDtos } from '../dtos/index';
 import { extractModelFromPath } from '../utils/modelAccess.util';
 
+const DATE_ERROR = 'must be a Date instance';
+
+const formatErrors = (errors: ValidationError[]): string =>
+  errors.map(error => Object.values(error.constraints || {}).join(', ')).join(', ');
+
+/**
+ * Valide req[value] avec le DTO du modèle (DTO de création pour le body, DTO complet sinon).
+ * Les dates envoyées en chaîne ISO sont converties en Date avant une seconde validation.
+ */
 const validationMiddleware = (
   value: 'body' | 'query' | 'params' = 'body',
   skipMissingProperties = false,
   whitelist = true,
   forbidNonWhitelisted = true,
 ): RequestHandler => {
+  const options = { skipMissingProperties, whitelist, forbidNonWhitelisted };
+
   return async (req, _res, next) => {
-    const modelName = (req.params.model ? req.params.model.toLowerCase() : extractModelFromPath(req.path)) as DtoKeys;
-    const dtosType = value === 'body' ? createDtos : dtos;
+    try {
+      const modelName = (req.params.model ? req.params.model.toLowerCase() : extractModelFromPath(req.path)) as DtoKeys;
+      const dtoClass = (value === 'body' ? createDtos : dtos)[modelName] as ClassConstructor<object> | undefined;
+      if (!dtoClass) throw new HttpException(400, `No DTO found for model ${modelName}`);
 
-    if (!dtosType[modelName]) {
-      return next(new HttpException(400, `No DTO found for model ${modelName}`));
-    }
+      const data = req[value];
+      let errors = await validate(plainToInstance(dtoClass, data), options);
+      if (errors.length === 0) return next();
 
-    const dtoClass = dtosType[modelName] as ClassConstructor<any>;
-    const dtoInstance = plainToInstance(dtoClass, req[value]);
-    const errors: ValidationError[] = await validate(dtoInstance, { skipMissingProperties, whitelist, forbidNonWhitelisted });
+      const dateErrors = errors.filter(error => Object.values(error.constraints || {}).some(msg => msg.includes(DATE_ERROR)));
+      if (dateErrors.length === 0) throw new HttpException(400, formatErrors(errors));
 
-    if (errors.length === 0) return next();
-
-    const errorMessages = errors.map((error: ValidationError) => Object.values(error.constraints || {}).join(', ')).join(', ');
-
-    if (errorMessages.includes('must be a Date instance')) {
-      for (const error of errors) {
-        if (Object.values(error.constraints || {}).some(msg => msg.includes('must be a Date instance'))) {
-          const raw = req[value][error.property];
-          if (raw === 'Invalid Date') return next(new HttpException(400, `${error.property} is an invalid date`));
-          req[value][error.property] = new Date(raw);
-        }
+      for (const error of dateErrors) {
+        const raw = data[error.property];
+        const date = new Date(raw);
+        if (raw === 'Invalid Date' || isNaN(date.getTime())) throw new HttpException(400, `${error.property} is an invalid date`);
+        data[error.property] = date;
       }
-      const reErrors: ValidationError[] = await validate(plainToInstance(dtoClass, req[value]), { skipMissingProperties, whitelist, forbidNonWhitelisted });
-      if (reErrors.length > 0) {
-        const reErrorMessages = reErrors.map((error: ValidationError) => Object.values(error.constraints || {}).join(', ')).join(', ');
-        return next(new HttpException(400, reErrorMessages));
-      }
-      return next();
+      errors = await validate(plainToInstance(dtoClass, data), options);
+      if (errors.length > 0) throw new HttpException(400, formatErrors(errors));
+      next();
+    } catch (error) {
+      next(error);
     }
-
-    return next(new HttpException(400, errorMessages));
   };
 };
 

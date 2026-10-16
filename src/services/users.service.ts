@@ -1,62 +1,56 @@
 import bcrypt from 'bcrypt';
 import { Model, ModelStatic, CreationAttributes, WhereOptions } from 'sequelize';
 import BaseRoute from '../routes/base.route';
-import { ObjectUtil } from '../utils/object.util';
 import HttpException from '../exceptions/HttpException';
-import BaseService from './base.service';
 import { signAuthToken } from '../utils/jwt.util';
+import { hashPassword } from '../utils/password.util';
 import { DataStoredInToken, TokenData } from '../interfaces/auth.interface';
 
-class UsersService<T extends Model<typeof BaseRoute.userModel>> {
-  private userModel: ModelStatic<T>;
-  private baseService: BaseService<T>;
+type Attributes = Record<string, unknown>;
 
-  constructor(userModel: ModelStatic<T>) {
-    this.userModel = userModel;
-    this.baseService = new BaseService();
+class UsersService<T extends Model> {
+  constructor(private userModel: ModelStatic<T>) {}
+
+  private get usernameField() { return BaseRoute.fieldNameUsername; }
+  private get passwordField() { return BaseRoute.fieldNameUserPassword; }
+
+  private findByUsername(username: string): Promise<T | null> {
+    return this.userModel.findOne({ where: { [this.usernameField]: username } as WhereOptions });
   }
 
-  private async hashPassword(password: string): Promise<string> {
-    const saltRounds = parseInt(process.env.USER_PASSWORD_HASH_SALT || '10', 10);
-    return bcrypt.hash(password, saltRounds);
+  /** Représentation publique d'un utilisateur : jamais de mot de passe (même hashé). */
+  private toPublic(user: T): Attributes {
+    const { [this.passwordField]: _omit, ...rest } = user.get({ plain: true }) as Attributes;
+    return rest;
   }
 
-  private async validatePassword(user: Partial<T>, password: string): Promise<boolean> {
-    const isPasswordValid = await bcrypt.compare(password, user[BaseRoute.fieldNameUserPassword as keyof T] as string);
-    if (!isPasswordValid) throw new HttpException(401, 'Invalid email or password');
-    return true;
-  }
+  public async registerUser(userDatas: CreationAttributes<T>): Promise<Attributes> {
+    const datas = { ...(userDatas as Attributes) };
+    const username = datas[this.usernameField];
+    const password = datas[this.passwordField];
+    if (!username) throw new HttpException(400, 'Username is required.');
+    if (!password) throw new HttpException(400, 'Password is required.');
 
-  public async registerUser(userDatas: Partial<T>): Promise<Partial<T>> {
-    const usernameField = BaseRoute.fieldNameUsername as keyof T;
-    const passwordField = BaseRoute.fieldNameUserPassword as keyof T;
-    const username = userDatas[usernameField as string] as string | undefined;
-    const password = userDatas[passwordField as string] as string | undefined;
+    if (await this.findByUsername(String(username))) throw new HttpException(400, 'Username already exists.');
 
-    if (!username) throw new Error('Username is required.');
-    if (!password) throw new Error('Password is required.');
-
-    const whereCondition: WhereOptions<any> = { [usernameField]: username };
-    const existingUser = await this.userModel.findOne({ where: whereCondition });
-
-    if (existingUser) throw new HttpException(400, 'Username already exists.');
-
-    userDatas[passwordField as string] = await this.hashPassword(password);
-    const createdUser = await this.userModel.create(userDatas as CreationAttributes<T>);
-    return ObjectUtil.filterKeys(createdUser, [passwordField]);
+    datas[this.passwordField] = await hashPassword(String(password));
+    const createdUser = await this.userModel.create(datas as CreationAttributes<T>);
+    return this.toPublic(createdUser);
   }
 
   public async loginUser(username: string, password: string): Promise<TokenData> {
     if (!username || !password) throw new HttpException(400, 'Username and password are required');
-    const users = await this.baseService.findMultipleByFieldName(BaseRoute.userModelName, BaseRoute.fieldNameUsername, username);
-    if (users.length === 0) throw new HttpException(401, 'User not found');
-    await this.validatePassword(users[0], password);
+    const user = await this.findByUsername(username);
+    // Même message dans les deux cas pour ne pas révéler si le compte existe.
+    const hash = user?.get(this.passwordField) as string | undefined;
+    if (!user || !hash || !(await bcrypt.compare(password, hash))) {
+      throw new HttpException(401, 'Invalid username or password');
+    }
 
     const datasInToken: DataStoredInToken = {
-      id: users[0][BaseRoute.userModel.primaryKeyAttribute] as number,
-      username: users[0][BaseRoute.fieldNameUsername] as string
+      id: user.get(this.userModel.primaryKeyAttribute) as number,
+      username: user.get(this.usernameField) as string,
     };
-
     return signAuthToken(datasInToken);
   }
 }

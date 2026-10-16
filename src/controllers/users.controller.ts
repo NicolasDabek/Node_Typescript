@@ -1,7 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
+import { Model, ModelStatic, CreationAttributes } from 'sequelize';
 import UsersService from '../services/users.service';
 import HttpException from '../exceptions/HttpException';
-import { Model, CreationAttributes, ModelStatic } from 'sequelize';
+import { asyncHandler } from '../utils/asyncHandler.util';
 
 class UsersController<T extends Model> {
   private userService: UsersService<T>;
@@ -10,27 +11,18 @@ class UsersController<T extends Model> {
     this.userService = new UsersService(userModel);
   }
 
-  public registerUser = async (req: Request<{}, {}, CreationAttributes<T>>, res: Response, next: NextFunction) => {
-    try {
-      const datas = req.body;
-      if (!datas) throw new HttpException(400, 'User data is required');
-      const createdUser = await this.userService.registerUser(datas);
-      return res.status(201).json({ datas: createdUser });
-    } catch (error) {
-      next(error instanceof HttpException ? error : new HttpException(500, 'Internal Server Error'));
-    }
-  }
+  public registerUser = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.body) throw new HttpException(400, 'User data is required');
+    const createdUser = await this.userService.registerUser(req.body as CreationAttributes<T>);
+    res.status(201).json({ datas: createdUser });
+  });
 
-  public loginUser = async (req: Request<{}, {}, Partial<CreationAttributes<T>>>, res: Response, next: NextFunction) => {
-    try {
-      const { username, password } = req.body;
-      if (!username || !password) throw new HttpException(400, 'Username and password are required');
-      const token = await this.userService.loginUser(username, password);
-      return res.status(200).json({ datas : token });
-    } catch (error) {
-      next(error instanceof HttpException ? error : new HttpException(500, 'Internal Server Error'));
-    }
-  }
+  public loginUser = asyncHandler(async (req: Request, res: Response) => {
+    const { username, password } = req.body || {};
+    if (!username || !password) throw new HttpException(400, 'Username and password are required');
+    const token = await this.userService.loginUser(String(username), String(password));
+    res.status(200).json({ datas: token });
+  });
 }
 
 export default UsersController;
