@@ -8,7 +8,7 @@ export class SequelizeUtil<T extends Model> {
   public getModel = (modelName: string): ModelStatic<T> => {
     const requested = modelName.toLowerCase();
     const match = Object.keys(this.models).find(key => key.toLowerCase() === requested);
-    const model = match ? (this.models as Record<string, ModelStatic<T>>)[match] : undefined;
+    const model = match ? (this.models as unknown as Record<string, ModelStatic<T>>)[match] : undefined;
     if (!model) throw new HttpException(404, `Model '${modelName}' not found.`);
     return model;
   };

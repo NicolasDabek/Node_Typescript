@@ -2,8 +2,6 @@
     "env": "production",
     "dbConfig": {
         "host": "localhost",
-        "user": "root",
-        "password": "",
         "database": "projet_test_nico",
         "pool": {
             "min": 0,
