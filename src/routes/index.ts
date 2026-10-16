@@ -3,16 +3,17 @@ import path from 'path';
 import Route from '../interfaces/routes.interface';
 import BaseRoute from './base.route';
 
-function loadCustomRoutes(): Route[] {
+/** Instancie chaque *.route.(ts|js) du dossier (hors base.*), dans l'ordre du dossier. */
+export function loadCustomRoutes(dir = __dirname): Route[] {
   const routes: Route[] = [];
-  const files = fs.readdirSync(__dirname).filter(file => {
+  const files = fs.readdirSync(dir).filter(file => {
     const base = path.basename(file);
     return /\.route\.(ts|js)$/.test(base) && !base.startsWith('base.');
   });
 
   for (const file of files) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const imported = require(path.join(__dirname, file));
+    const imported = require(path.join(dir, file));
     const Ctor = imported.default || imported;
     if (typeof Ctor === 'function') {
       routes.push(new Ctor());

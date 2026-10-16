@@ -22,6 +22,7 @@ export async function generateInitModels() {
   console.log(`init-models.ts généré (${names.length} modèles)`);
 }
 
+/* istanbul ignore next -- point d'entrée en ligne de commande */
 if (require.main === module) {
   generateInitModels().catch(error => {
     console.error(error);

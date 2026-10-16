@@ -189,6 +189,7 @@ export async function generateDtos() {
   await updateIndexFile();
 }
 
+/* istanbul ignore next -- point d'entrée en ligne de commande */
 if (require.main === module) {
   generateDtos().catch(error => console.error('Erreur lors de la génération des DTOs:', error));
 }

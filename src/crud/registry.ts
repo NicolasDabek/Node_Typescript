@@ -13,8 +13,8 @@ export const normalizeModelName = (modelName?: string): string => (modelName || 
 export const getBlockedModels = (): string[] => csv(process.env.CRUD_BLOCKED_MODELS ?? 'users');
 const getAllowedModels = (): string[] | null => (process.env.CRUD_ALLOWED_MODELS ? csv(process.env.CRUD_ALLOWED_MODELS) : null);
 
-function loadOverrides(): Record<string, CrudModelOptions> {
-  const dir = path.join(__dirname, 'overrides');
+/** Charge les surcharges <modele>.crud.(ts|js) d'un dossier (src/crud/overrides par défaut). */
+export function loadOverrides(dir = path.join(__dirname, 'overrides')): Record<string, CrudModelOptions> {
   const overrides: Record<string, CrudModelOptions> = {};
   if (!fs.existsSync(dir)) return overrides;
   for (const file of fs.readdirSync(dir)) {
@@ -30,9 +30,9 @@ function loadOverrides(): Record<string, CrudModelOptions> {
 const overrides = loadOverrides();
 
 /** Configuration effective d'un modèle (env + surcharge éventuelle). */
-export function resolveCrudModel(modelName: string): ResolvedCrudModel {
+export function resolveCrudModel(modelName: string, source: Record<string, CrudModelOptions> = overrides): ResolvedCrudModel {
   const name = normalizeModelName(modelName);
-  const override = overrides[name] || {};
+  const override = source[name] || {};
   const allowed = getAllowedModels();
   const exposedByEnv = !getBlockedModels().includes(name) && (!allowed || allowed.includes(name));
   return {
@@ -47,7 +47,7 @@ export function resolveCrudModel(modelName: string): ResolvedCrudModel {
 
 /** Tous les modèles Sequelize connus, avec leur configuration CRUD. */
 export function listCrudModels(): ResolvedCrudModel[] {
-  return Object.keys(DB.Models).map(resolveCrudModel);
+  return Object.keys(DB.Models).map(name => resolveCrudModel(name));
 }
 
 export function isModelExposed(modelName: string): boolean {

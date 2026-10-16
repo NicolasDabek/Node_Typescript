@@ -209,6 +209,7 @@ export async function generateModelTests() {
   }
 }
 
+/* istanbul ignore next -- point d'entrée en ligne de commande */
 if (require.main === module) (async () => {
   try {
     console.log('Génération des tests pour modèles...');

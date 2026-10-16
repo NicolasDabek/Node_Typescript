@@ -22,6 +22,7 @@ export async function generateResource(name: string) {
   console.log(`Ressource ${ClassName} générée. Le CRUD générique /${modelName} est déjà exposé.`);
 }
 
+/* istanbul ignore next -- point d'entrée en ligne de commande */
 if (require.main === module) {
   generateResource(process.argv[2]).catch(error => {
     console.error(error.message);

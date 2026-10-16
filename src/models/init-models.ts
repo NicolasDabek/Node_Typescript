@@ -20,7 +20,6 @@ export function initModels(sequelize: Sequelize) {
   const products = _products.initModel(sequelize);
   const users = _users.initModel(sequelize);
 
-
   return {
     products: products,
     users: users,
