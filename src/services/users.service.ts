@@ -4,7 +4,7 @@ import BaseRoute from '../routes/base.route';
 import { ObjectUtil } from '../utils/object.util';
 import HttpException from '../exceptions/HttpException';
 import BaseService from './base.service';
-import jwt from 'jsonwebtoken';
+import { signAuthToken } from '../utils/jwt.util';
 import { DataStoredInToken, TokenData } from '../interfaces/auth.interface';
 
 class UsersService<T extends Model<typeof BaseRoute.userModel>> {
@@ -57,12 +57,7 @@ class UsersService<T extends Model<typeof BaseRoute.userModel>> {
       username: users[0][BaseRoute.fieldNameUsername] as string
     };
 
-    const token: TokenData = {
-      token: jwt.sign({ datasInToken }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '1h' }),
-      expiresIn: 3600
-    };
-
-    return token;
+    return signAuthToken(datasInToken);
   }
 }
 
