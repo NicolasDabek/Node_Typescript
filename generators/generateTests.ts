@@ -158,7 +158,7 @@ describe('${className} API', () => {
   }
 }
 
-(async () => {
+if (require.main === module) (async () => {
   try {
     console.log('Génération des tests pour modèles...');
     await generateModelTests();

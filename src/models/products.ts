@@ -13,9 +13,9 @@ export type productsOptionalAttributes = "id";
 export type productsCreationAttributes = Optional<productsAttributes, productsOptionalAttributes>;
 
 export class products extends Model<productsAttributes, productsCreationAttributes> implements productsAttributes {
-  id!: number;
-  productName!: string;
-  price!: number;
+  declare id: number;
+  declare productName: string;
+  declare price: number;
 
 
   static initModel(sequelize: Sequelize.Sequelize): typeof products {

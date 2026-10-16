@@ -17,13 +17,13 @@ export type usersOptionalAttributes = "id" | "isActive";
 export type usersCreationAttributes = Optional<usersAttributes, usersOptionalAttributes>;
 
 export class users extends Model<usersAttributes, usersCreationAttributes> implements usersAttributes {
-  id!: number;
-  username!: string;
-  password!: string;
-  email!: string;
-  isActive?: number;
-  addressIP!: string;
-  dateCreation!: Date;
+  declare id: number;
+  declare username: string;
+  declare password: string;
+  declare email: string;
+  declare isActive?: number;
+  declare addressIP: string;
+  declare dateCreation: Date;
 
 
   static initModel(sequelize: Sequelize.Sequelize): typeof users {

@@ -40,7 +40,10 @@ describe('Products API', () => {
       .get(`/products/${idCreatedData}`)
       .expect(200);
     expect(getResponse.body.datas).toHaveProperty('id', idCreatedData);
-    expect(getResponse.body.datas).toMatchObject(createdData);
+    // DECIMAL est renvoyé en chaîne par mysql2 : on compare le prix en nombre
+    const { price, ...rest } = createdData as any;
+    expect(getResponse.body.datas).toMatchObject(rest);
+    expect(Number(getResponse.body.datas.price)).toBeCloseTo(Number(price));
   });
 
   it('should update an existing products', async () => {
