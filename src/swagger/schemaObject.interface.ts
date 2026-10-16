@@ -4,10 +4,15 @@ export interface SchemaObject {
   required?: string[];
   items?: SchemaObject;
   format?: string;
-  enum?: any[];
+  enum?: unknown[];
   minLength?: number;
   maxLength?: number;
   minimum?: number;
   maximum?: number;
   pattern?: string;
+  nullable?: boolean;
+  readOnly?: boolean;
+  writeOnly?: boolean;
+  description?: string;
+  $ref?: string;
 }
