@@ -52,4 +52,15 @@ Exemple fourni : `users.crud.ts` (mot de passe hashé à l'écriture, jamais ren
 
 ## Tests
 
-`npm test` nécessite une base MySQL/MariaDB et les variables obligatoires (`JWT_SECRET`, `SECRET_SESSION`, `DB_USERNAME`, `DB_PASSWORD`). Avec `DB_SYNC=true` les tables sont créées depuis les modèles. `npm run gen-tests` régénère `tests/models/*.test.ts` (test 401/403 pour les modèles non exposés, CRUD complet sinon).
+Deux familles, séparées en projets Jest (`jest.config.js`) :
+
+| Commande | Contenu | Base requise |
+|---|---|---|
+| `npm test` / `npm run test:unit` | Tests unitaires `tests/unit/**` : utils, services, contrôleurs, middlewares, `validateEnv`, JWT, règles d'exposition et surcharges CRUD, chargeur de routes, générateur OpenAPI, générateurs `gen-*`. Sequelize, `req`/`res`, env et fs sont mockés. | Non |
+| `npm run test:coverage` | Tests unitaires + couverture, avec seuils minimaux (`coverageThreshold` : 99 % lignes/instructions, 95 % branches/fonctions) ; une baisse fait échouer la commande. | Non |
+| `npm run test:integration` | `tests/models/**` (générés par `gen-tests`) et `tests/integration/**` (auth, Swagger) contre une vraie base. | Oui |
+| `npm run test:all` | Unitaires puis intégration. | Oui |
+
+Les tests unitaires fixent eux-mêmes leur environnement (`tests/unit/setup-env.ts`, avec un port de base invalide : tout accès réel à la base échouerait). Ils vérifient aussi que `gen-tests`, `gen-dtos` et `gen-init-models` reproduisent exactement les fichiers commités, sans rien écrire sur le disque.
+
+Les tests d'intégration nécessitent MySQL/MariaDB et les variables obligatoires (`JWT_SECRET`, `SECRET_SESSION`, `DB_USERNAME`, `DB_PASSWORD`). Avec `DB_SYNC=true` les tables sont créées depuis les modèles. `npm run gen-tests` régénère `tests/models/*.test.ts` (test 401/403 pour les modèles non exposés, CRUD complet sinon).
