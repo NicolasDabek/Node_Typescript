@@ -17,4 +17,39 @@ Framework générique Express + Sequelize : une table DB devient un CRUD via `/:
 - `CRUD_BLOCKED_MODELS=users` — modèles exclus du CRUD générique
 - `GENERIC_CRUD_AUTH=true` — JWT obligatoire sur le CRUD
 
-Swagger runtime : `/swagger/api-docs`
+## Comment les routes sont créées
+
+- `src/routes/index.ts` charge automatiquement chaque `src/routes/*.route.ts` (routes spécifiques, ex. `users.route.ts` : register/login), puis le CRUD générique `BaseRoute`.
+- `BaseRoute` expose `/:model` pour **tout modèle Sequelize** de `src/models` (généré par `gen-models` / `gen-init-models`) :
+  `GET /:model`, `GET /:model/:id`, `GET /:model/onefield/:fieldName`, `GET /:model/multiple/:fieldName/:fieldVal`, `POST /:model`, `PUT /:model/:id`, `DELETE /:model/:id`.
+- Le corps de POST/PUT est validé avec les DTOs générés (`gen-dtos`).
+- Accès : `CRUD_BLOCKED_MODELS` (défaut `users`), `CRUD_ALLOWED_MODELS` (liste blanche optionnelle), `GENERIC_CRUD_AUTH=true` (JWT obligatoire). Un modèle bloqué répond 403 avant toute validation.
+
+### Surcharges par modèle (optionnel)
+
+Créer `src/crud/overrides/<modele>.crud.ts` (chargé automatiquement, même convention que `*.route.ts`) :
+
+```ts
+import { CrudModelOptions } from '../crud.interface';
+
+const ordersCrud: CrudModelOptions = {
+  exposed: true,                 // force l'exposition / le blocage (sinon variables d'env)
+  auth: true,                    // JWT requis pour ce modèle (sinon GENERIC_CRUD_AUTH)
+  operations: ['list', 'read'],  // lecture seule
+  hiddenFields: ['secret'],      // jamais renvoyé ni filtrable
+  hooks: { beforeCreate: data => ({ ...data, createdBy: 'api' }) },
+};
+export default ordersCrud;
+```
+
+Exemple fourni : `users.crud.ts` (mot de passe hashé à l'écriture, jamais renvoyé).
+
+## Documentation API (Swagger / OpenAPI)
+
+- Servie par l'appli sur `/swagger/api-docs` (Swagger UI servi localement depuis `node_modules`, aucun CDN).
+- Générée automatiquement depuis les routes enregistrées et les modèles Sequelize : schémas lecture / création / mise à jour, champs requis pris des DTOs, réponses et codes d'erreur (400/401/403/404/500), sécurité bearer JWT pour les modèles avec `auth`. Les modèles bloqués sont exclus du CRUD documenté. Un nouveau modèle est documenté sans aucune action manuelle.
+- `npm run gen-docs` écrit le même document dans `docs/api/openapi.json` (+ un fichier `swagger-<modele>.json` par modèle).
+
+## Tests
+
+`npm test` nécessite une base MySQL/MariaDB et les variables obligatoires (`JWT_SECRET`, `SECRET_SESSION`, `DB_USERNAME`, `DB_PASSWORD`). Avec `DB_SYNC=true` les tables sont créées depuis les modèles. `npm run gen-tests` régénère `tests/models/*.test.ts` (test 401/403 pour les modèles non exposés, CRUD complet sinon).
