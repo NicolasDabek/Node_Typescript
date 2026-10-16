@@ -1,4 +1,5 @@
 import DB from '../src/databases';
+import { resolveCrudModel } from '../src/crud/registry';
 import fs from 'fs/promises';
 import path from 'path';
 import { DataTypes } from 'sequelize';
@@ -61,14 +62,6 @@ export async function generateRelatedData(model: any) {
   }
 
   return relatedData;
-}
-
-// Modèles bloqués sur le CRUD générique (même règle que src/utils/modelAccess.util.ts)
-function getBlockedModels(): string[] {
-  return (process.env.CRUD_BLOCKED_MODELS || 'users')
-    .split(',')
-    .map(s => s.trim().toLowerCase())
-    .filter(Boolean);
 }
 
 // Champs numériques que mysql2 peut renvoyer en chaîne (DECIMAL...) : comparés en nombre
@@ -193,8 +186,7 @@ ${compare}
 export async function generateModelTests() {
   await ensureDirectoryExists(modelTestDir);
 
-  const blockedModels = getBlockedModels();
-  const modelFiles = (await fs.readdir(modelsDir)).filter(file => file.endsWith('.ts') && file !== 'init-models.ts');
+    const modelFiles = (await fs.readdir(modelsDir)).filter(file => file.endsWith('.ts') && file !== 'init-models.ts');
   let hooksAlreadyUsed = false;
 
   for (const modelFile of modelFiles) {
@@ -205,7 +197,7 @@ export async function generateModelTests() {
     const primaryKey = Object.keys(attributes).find(key => attributes[key].primaryKey) || 'id';
 
     let testContent: string;
-    if (blockedModels.includes(modelName.toLowerCase())) {
+    if (!resolveCrudModel(modelName).exposed) {
       testContent = blockedModelTestTemplate(modelName, className, primaryKey);
     } else {
       testContent = crudModelTestTemplate(modelName, className, primaryKey, getNumericFields(attributes), !hooksAlreadyUsed);

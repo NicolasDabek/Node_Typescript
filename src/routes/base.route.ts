@@ -1,12 +1,18 @@
-import { NextFunction, Response, Router } from 'express';
-import BaseControler from '../controllers/base.controller';
+import { NextFunction, Request, Response, Router } from 'express';
+import BaseController from '../controllers/base.controller';
 import Route from '../interfaces/routes.interface';
 import validationMiddleware from '../middlewares/validation.middleware';
 import authMiddleware from '../middlewares/auth.middleware';
 import { RequestWithUser } from '../interfaces/auth.interface';
 import DB from '../databases';
 import { Model } from 'sequelize';
+import { assertCrudAccess } from '../crud/registry';
+import { CrudOperation } from '../crud/crud.interface';
 
+/**
+ * CRUD générique sur /:model pour tout modèle Sequelize exposé.
+ * Accès, opérations, auth et hooks par modèle : voir src/crud/registry.ts et src/crud/overrides.
+ */
 class BaseRoute implements Route {
   public path = '/:model';
   public router = Router();
@@ -15,22 +21,31 @@ class BaseRoute implements Route {
   public static fieldNameUsername = 'username';
   public static fieldNameUserPassword = 'password';
   public static relTables: string[] = [];
-  private activateAuthMiddleware = process.env.GENERIC_CRUD_AUTH === 'true';
-  private checkAuth = (req: RequestWithUser<Model>, res: Response, next: NextFunction) => next();
 
   constructor() {
-    if (this.activateAuthMiddleware) this.checkAuth = authMiddleware;
     this.initializeRoutes();
   }
 
+  /** Vérifie l'accès (403 avant toute validation) puis applique l'auth JWT si le modèle l'exige. */
+  private guard = (operation: CrudOperation) => (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const config = assertCrudAccess(req.params.model, operation);
+      if (config.auth) return authMiddleware(req as RequestWithUser<Model>, res, next);
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+
   private initializeRoutes() {
-    this.router.get(`${this.path}`, this.checkAuth, BaseControler.getAllDatas);
-    this.router.get(`${this.path}/:id(\\d+)`, this.checkAuth, BaseControler.getDataById);
-    this.router.get(`${this.path}/onefield/:fieldName`, this.checkAuth, BaseControler.getAllDataOneField);
-    this.router.get(`${this.path}/multiple/:fieldName/:fieldVal`, this.checkAuth, BaseControler.getMultipleByFieldVal);
-    this.router.post(`${this.path}`, this.checkAuth, validationMiddleware(), BaseControler.createData);
-    this.router.put(`${this.path}/:id(\\d+)`, this.checkAuth, validationMiddleware('body', true), BaseControler.updateData);
-    this.router.delete(`${this.path}/:id(\\d+)`, this.checkAuth, BaseControler.deleteData);
+    const p = this.path;
+    this.router.get(p, this.guard('list'), BaseController.getAllDatas);
+    this.router.get(`${p}/:id(\\d+)`, this.guard('read'), BaseController.getDataById);
+    this.router.get(`${p}/onefield/:fieldName`, this.guard('field'), BaseController.getAllDataOneField);
+    this.router.get(`${p}/multiple/:fieldName/:fieldVal`, this.guard('search'), BaseController.getMultipleByFieldVal);
+    this.router.post(p, this.guard('create'), validationMiddleware(), BaseController.createData);
+    this.router.put(`${p}/:id(\\d+)`, this.guard('update'), validationMiddleware('body', true), BaseController.updateData);
+    this.router.delete(`${p}/:id(\\d+)`, this.guard('delete'), BaseController.deleteData);
   }
 }
 
