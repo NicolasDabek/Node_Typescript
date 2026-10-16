@@ -181,14 +181,14 @@ export type CreateDtoValues = typeof createDtos[CreateDtoKeys];`;
   }
 };
 
-(async () => {
-  try {
-    const config = await loadConfig();
-    const models = DB.Models;
-    await generateDtoFiles(models, config);
-    await generateBaseDto();
-    await updateIndexFile();
-  } catch (error) {
-    console.error('Erreur lors de la génération des DTOs:', error);
-  }
-})();
+export async function generateDtos() {
+  const config = await loadConfig();
+  const models = DB.Models;
+  await generateDtoFiles(models, config);
+  await generateBaseDto();
+  await updateIndexFile();
+}
+
+if (require.main === module) {
+  generateDtos().catch(error => console.error('Erreur lors de la génération des DTOs:', error));
+}

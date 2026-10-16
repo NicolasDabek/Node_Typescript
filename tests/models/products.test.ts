@@ -7,7 +7,7 @@ describe('Products API', () => {
   let transaction: any;
   const instanceData = generateFakeData(products.rawAttributes);
   let createdData: products;
-  
+
   beforeAll(async () => {
     await app.dbSequelize.sequelize.sync({ force: true });
   });
@@ -19,7 +19,7 @@ describe('Products API', () => {
   afterEach(async () => {
     await transaction.rollback();
   });
-  
+
   afterAll(async () => {
     await app.dbSequelize.sequelize.close();
   });
@@ -40,7 +40,7 @@ describe('Products API', () => {
       .get(`/products/${idCreatedData}`)
       .expect(200);
     expect(getResponse.body.datas).toHaveProperty('id', idCreatedData);
-    // DECIMAL est renvoyé en chaîne par mysql2 : on compare le prix en nombre
+    // Les champs numériques (DECIMAL...) peuvent être renvoyés en chaîne par mysql2 : on les compare en nombre
     const { price, ...rest } = createdData as any;
     expect(getResponse.body.datas).toMatchObject(rest);
     expect(Number(getResponse.body.datas.price)).toBeCloseTo(Number(price));

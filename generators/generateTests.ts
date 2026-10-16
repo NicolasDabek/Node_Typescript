@@ -63,37 +63,73 @@ export async function generateRelatedData(model: any) {
   return relatedData;
 }
 
-async function generateModelTests() {
-  await ensureDirectoryExists(modelTestDir);
+// Modèles bloqués sur le CRUD générique (même règle que src/utils/modelAccess.util.ts)
+function getBlockedModels(): string[] {
+  return (process.env.CRUD_BLOCKED_MODELS || 'users')
+    .split(',')
+    .map(s => s.trim().toLowerCase())
+    .filter(Boolean);
+}
 
-  const modelFiles = (await fs.readdir(modelsDir)).filter(file => file.endsWith('.ts') && file !== 'init-models.ts');
-  let beforeAndAfterAllAlreadyUsed = false;
+// Champs numériques que mysql2 peut renvoyer en chaîne (DECIMAL...) : comparés en nombre
+function getNumericFields(attributes: any): string[] {
+  return Object.keys(attributes).filter(key => {
+    const type = attributes[key].type;
+    return type instanceof DataTypes.DECIMAL || type instanceof DataTypes.FLOAT || type instanceof DataTypes.DOUBLE;
+  });
+}
 
-  for (const modelFile of modelFiles) {
-    const modelName = path.basename(modelFile, '.ts');
-    const className = modelName.charAt(0).toUpperCase() + modelName.slice(1);
-    const testFilePath = path.join(modelTestDir, `${modelName}.test.ts`);
-    const primaryKey = Object.keys(DB.Models[modelName].rawAttributes).find(key => DB.Models[modelName].rawAttributes[key].primaryKey);
-    const beforeAll = `
+function blockedModelTestTemplate(modelName: string, className: string, primaryKey: string): string {
+  return `import request from 'supertest';
+import { app } from '../../src/index';
+import { generateFakeData } from '../../generators/generateTests';
+import { ${modelName} } from '../../src/models/${modelName}';
+
+// Le modèle ${modelName} est volontairement bloqué sur le CRUD générique
+// (CRUD_BLOCKED_MODELS) : on vérifie qu'il reste inaccessible.
+describe('${className} API (CRUD générique bloqué)', () => {
+  it('refuse la création via le CRUD générique', async () => {
+    const { ${primaryKey}, ...data } = generateFakeData(${modelName}.rawAttributes);
+    const response = await request(app.app).post('/${modelName}').send(data);
+    expect([401, 403]).toContain(response.statusCode);
+  });
+
+  it('refuse la lecture via le CRUD générique', async () => {
+    const response = await request(app.app).get('/${modelName}/1');
+    expect([401, 403]).toContain(response.statusCode);
+  });
+});
+`;
+}
+
+function crudModelTestTemplate(modelName: string, className: string, primaryKey: string, numericFields: string[], withHooks: boolean): string {
+  const hooksBefore = withHooks ? `
   beforeAll(async () => {
     await app.dbSequelize.sequelize.sync({ force: true });
   });
-`;
-    const afterAll = `
+` : '';
+  const hooksAfter = withHooks ? `
   afterAll(async () => {
     await app.dbSequelize.sequelize.close();
   });
-`;
-    const testContent = `import request from 'supertest';
+` : '';
+  const compare = numericFields.length
+    ? `    // Les champs numériques (DECIMAL...) peuvent être renvoyés en chaîne par mysql2 : on les compare en nombre
+    const { ${numericFields.join(', ')}, ...rest } = createdData as any;
+    expect(getResponse.body.datas).toMatchObject(rest);
+${numericFields.map(f => `    expect(Number(getResponse.body.datas.${f})).toBeCloseTo(Number(${f}));`).join('\n')}`
+    : `    expect(getResponse.body.datas).toMatchObject(createdData);`;
+
+  return `import request from 'supertest';
 import { app } from '../../src/index';
-import { generateFakeData, generateRelatedData } from '../../generators/generateTests';
+import { generateFakeData } from '../../generators/generateTests';
 import { ${modelName} } from '../../src/models/${modelName}';
 
 describe('${className} API', () => {
   let transaction: any;
   const instanceData = generateFakeData(${modelName}.rawAttributes);
   let createdData: ${modelName};
-  ${!beforeAndAfterAllAlreadyUsed ? beforeAll : ''}
+${hooksBefore}
   beforeEach(async () => {
     transaction = await app.dbSequelize.sequelize.transaction();
   });
@@ -101,9 +137,8 @@ describe('${className} API', () => {
   afterEach(async () => {
     await transaction.rollback();
   });
-  ${!beforeAndAfterAllAlreadyUsed ? (() => { beforeAndAfterAllAlreadyUsed = true; return afterAll })() : ''}
+${hooksAfter}
   it('should create a new ${modelName}', async () => {
-    const relatedData = await generateRelatedData(${modelName});
     const { ${primaryKey}, ...restInstanceData } = instanceData;
     const response = await request(app.app)
       .post('/${modelName}')
@@ -119,7 +154,7 @@ describe('${className} API', () => {
       .get(\`/${modelName}/\${idCreatedData}\`)
       .expect(200);
     expect(getResponse.body.datas).toHaveProperty('${primaryKey}', idCreatedData);
-    expect(getResponse.body.datas).toMatchObject(createdData);
+${compare}
   });
 
   it('should update an existing ${modelName}', async () => {
@@ -151,7 +186,31 @@ describe('${className} API', () => {
       .get(\`/${modelName}/\${nonExistentId}\`)
       .expect(404);
   });
-});`;
+});
+`;
+}
+
+export async function generateModelTests() {
+  await ensureDirectoryExists(modelTestDir);
+
+  const blockedModels = getBlockedModels();
+  const modelFiles = (await fs.readdir(modelsDir)).filter(file => file.endsWith('.ts') && file !== 'init-models.ts');
+  let hooksAlreadyUsed = false;
+
+  for (const modelFile of modelFiles) {
+    const modelName = path.basename(modelFile, '.ts');
+    const className = modelName.charAt(0).toUpperCase() + modelName.slice(1);
+    const testFilePath = path.join(modelTestDir, `${modelName}.test.ts`);
+    const attributes = DB.Models[modelName].rawAttributes;
+    const primaryKey = Object.keys(attributes).find(key => attributes[key].primaryKey) || 'id';
+
+    let testContent: string;
+    if (blockedModels.includes(modelName.toLowerCase())) {
+      testContent = blockedModelTestTemplate(modelName, className, primaryKey);
+    } else {
+      testContent = crudModelTestTemplate(modelName, className, primaryKey, getNumericFields(attributes), !hooksAlreadyUsed);
+      hooksAlreadyUsed = true;
+    }
 
     await fs.writeFile(testFilePath, testContent);
     console.log(`Test pour ${className} généré : ${testFilePath}`);
