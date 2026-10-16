@@ -56,7 +56,8 @@ logger.add(
 
 const stream = {
   write: (message: string) => {
-    logger.info(message.substring(0, message.lastIndexOf('\n')));
+    // morgan termine ses lignes par \n ; sans saut de ligne le message était vidé (substring(0, -1)).
+    logger.info(message.replace(/\n$/, ''));
   },
 };
 

@@ -1,29 +1,35 @@
 import { config } from 'dotenv';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 
 config();
 
+/**
+ * Arguments de sequelize-auto. Passés tels quels (sans shell) : un mot de passe contenant
+ * des espaces, des guillemets ou `;` n'est ni coupé ni interprété.
+ */
+export function buildSequelizeAutoArgs(env: NodeJS.ProcessEnv = process.env): string[] {
+  const args = [
+    '-h', String(env.DB_ADDRESS),
+    '-d', String(env.DB_NAME),
+    '-u', String(env.DB_USERNAME),
+    '-o', String(env.DB_DIR_OUTPUT_MODELS),
+    '-p', String(env.DB_PORT),
+    '--dialect', String(env.DB_DIALECT),
+  ];
+  if (env.DB_PASSWORD) args.push('-x', env.DB_PASSWORD);
+  if (env.DB_MODELS_IN_TYPESCRIPT === 'true') args.push('-l', 'ts');
+  return args;
+}
+
 export function generateModels(): Promise<void> {
-  // Construire la commande Sequelize Auto
-  let command = `sequelize-auto -h ${process.env.DB_ADDRESS} -d ${process.env.DB_NAME} -u ${process.env.DB_USERNAME} -o ${process.env.DB_DIR_OUTPUT_MODELS} -p ${process.env.DB_PORT} --dialect ${process.env.DB_DIALECT}`;
-
-  if (process.env.DB_PASSWORD) {
-    command += ` -x ${process.env.DB_PASSWORD}`;
-  }
-
-  if (process.env.DB_MODELS_IN_TYPESCRIPT === 'true') {
-    command += ` -l ts`;
-  }
-
-  // Exécuter la commande
-  return new Promise<void>((resolve, reject) => exec(command, (err, stdout, stderr) => {
+  return new Promise<void>((resolve, reject) => execFile('sequelize-auto', buildSequelizeAutoArgs(), (err, stdout, stderr) => {
     if (err) {
       reject(err);
       return;
     }
 
     console.log(`Output: ${stdout}`);
-    
+
     if (stderr) {
       console.error(`Stderr: ${stderr}`);
     }
@@ -31,6 +37,7 @@ export function generateModels(): Promise<void> {
   }));
 }
 
+/* istanbul ignore next -- point d'entrée en ligne de commande */
 if (require.main === module) {
   generateModels().catch(err => console.error(`Error: ${err.message}`));
 }

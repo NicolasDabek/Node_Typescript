@@ -6,8 +6,8 @@ import { generateResource } from './generateResource';
 import { generateSwaggerDocs, writeSwaggerDocs } from './swagger/generateSwaggerDocs';
 import { routes } from '../src/routes';
 
-async function main() {
-  const [cmd, arg] = process.argv.slice(2);
+export async function main(argv: string[] = process.argv.slice(2)) {
+  const [cmd, arg] = argv;
   switch (cmd) {
     case 'models':
       await generateModels();
@@ -46,7 +46,11 @@ async function main() {
   }
 }
 
-main().catch(error => {
-  console.error(error);
-  process.exit(1);
-});
+// Exécuté seulement en ligne de commande : l'import (tests) ne lance rien.
+/* istanbul ignore next -- point d'entrée en ligne de commande */
+if (require.main === module) {
+  main().catch(error => {
+    console.error(error);
+    process.exit(1);
+  });
+}
