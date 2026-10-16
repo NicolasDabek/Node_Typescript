@@ -1,8 +1,14 @@
 require('dotenv').config();
 
+function requireEnv(name) {
+  const value = process.env[name];
+  if (value === undefined) throw new Error(`Variable d'environnement manquante : ${name}`);
+  return value;
+}
+
 const shared = {
-  username: process.env.DB_USERNAME || 'root',
-  password: process.env.DB_PASSWORD || '',
+  username: requireEnv('DB_USERNAME'),
+  password: requireEnv('DB_PASSWORD'),
   database: process.env.DB_NAME || 'projet_test_nico',
   host: process.env.DB_ADDRESS || 'localhost',
   port: Number(process.env.DB_PORT || 3306),

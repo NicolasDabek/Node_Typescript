@@ -74,7 +74,7 @@ class App {
     this.app.use(hpp());
     this.app.use(helmet());
     this.app.use(session({
-      secret: process.env.SECRET_SESSION || 'change-me-in-production',
+      secret: process.env.SECRET_SESSION as string,
       resave: false,
       saveUninitialized: false,
     }));

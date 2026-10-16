@@ -1,14 +1,12 @@
 {
-  "env": "development",
-  "dbConfig": {
-    "host": "localhost",
-    "user": "root",
-    "password": "",
-    "database": "projet_test_nico",
-    "pool": {
-      "min": 0,
-      "max": 5
-    },
-    "port": 3306
-  }
+    "env": "development",
+    "dbConfig": {
+        "host": "localhost",
+        "database": "projet_test_nico",
+        "pool": {
+            "min": 0,
+            "max": 5
+        },
+        "port": 3306
+    }
 }
