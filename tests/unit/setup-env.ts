@@ -10,3 +10,8 @@ process.env.DB_SYNC = 'false';
 delete process.env.CRUD_BLOCKED_MODELS;
 delete process.env.CRUD_ALLOWED_MODELS;
 delete process.env.GENERIC_CRUD_AUTH;
+delete process.env.GENERIC_CRUD_PUBLIC_READ;
+delete process.env.CORS_ORIGINS;
+delete process.env.SWAGGER_ENABLED;
+delete process.env.SESSION_ENABLED;
+delete process.env.TRUST_PROXY;

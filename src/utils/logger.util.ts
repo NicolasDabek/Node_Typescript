@@ -51,6 +51,9 @@ const logger = winston.createLogger({
 logger.add(
   new winston.transports.Console({
     format: winston.format.combine(winston.format.splat(), winston.format.colorize()),
+    // Sans ça, une exception au démarrage (env invalide, store de session manquant...) n'apparaît
+    // que dans logs/error et le process quitte en silence.
+    handleExceptions: true,
   }),
 );
 

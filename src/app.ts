@@ -10,9 +10,29 @@ import DB from './databases';
 import Routes from './interfaces/routes.interface';
 import errorMiddleware from './middlewares/error.middleware';
 import { logger, stream } from './utils/logger.util';
-import session from 'express-session';
+import session, { Store } from 'express-session';
 import { Server } from 'http';
 import { buildSwaggerDoc } from './swagger/buildDocs';
+
+export interface AppOptions {
+  /**
+   * Store des sessions (connect-redis, connect-session-sequelize...). Obligatoire en production
+   * si les sessions sont actives : le MemoryStore par défaut fuit la mémoire et ne se partage pas.
+   */
+  sessionStore?: Store;
+}
+
+const csv = (value?: string): string[] => (value || '').split(',').map(s => s.trim()).filter(Boolean);
+
+/** Origines CORS autorisées (CORS_ORIGINS, séparées par des virgules) ; aucune par défaut. */
+export const getCorsOrigins = (): string[] => csv(process.env.CORS_ORIGINS);
+
+/** Swagger : actif hors production, ou si SWAGGER_ENABLED vaut explicitement 'true' / 'false'. */
+export const isSwaggerEnabled = (env = process.env.NODE_ENV): boolean =>
+  process.env.SWAGGER_ENABLED ? process.env.SWAGGER_ENABLED === 'true' : env !== 'production';
+
+/** Sessions actives sauf SESSION_ENABLED=false. */
+export const isSessionEnabled = (): boolean => process.env.SESSION_ENABLED !== 'false';
 
 class App {
   public app: express.Application;
@@ -22,7 +42,10 @@ class App {
   public dbSequelize = DB;
   public static server: Server;
 
-  constructor(routes: Routes[], connectDatabase: boolean = true) {
+  private options: AppOptions;
+
+  constructor(routes: Routes[], connectDatabase: boolean = true, options: AppOptions = {}) {
+    this.options = options;
     this.configApp(routes);
     if (connectDatabase) this.connectToDatabase();
     this.initializeMiddlewares();
@@ -63,25 +86,34 @@ class App {
   }
 
   private initializeMiddlewares() {
-    const morganFormat = this.env === 'production' ? 'combined' : 'dev';
-    const corsOptions = {
-      origin: this.env === 'production' ? process.env.DOMAIN_NAME : true,
-      credentials: true,
-    };
+    const isProd = this.env === 'production';
+    const origins = getCorsOrigins();
 
-    this.app.use(morgan(morganFormat, { stream }));
-    this.app.use(cors(corsOptions));
+    if (process.env.TRUST_PROXY) this.app.set('trust proxy', process.env.TRUST_PROXY === 'true' ? 1 : process.env.TRUST_PROXY);
+    this.app.use(morgan(isProd ? 'combined' : 'dev', { stream }));
+    // Liste blanche explicite : sans CORS_ORIGINS, aucune origine tierce n'est autorisée.
+    this.app.use(cors({ origin: origins.length ? origins : false, credentials: true }));
     this.app.use(hpp());
     this.app.use(helmet());
-    this.app.use(session({
-      secret: process.env.SECRET_SESSION as string,
-      resave: false,
-      saveUninitialized: false,
-    }));
+    if (isSessionEnabled()) this.app.use(this.sessionMiddleware(isProd));
     this.app.use(compression());
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(cookieParser());
+  }
+
+  private sessionMiddleware(isProd: boolean) {
+    if (isProd && !this.options.sessionStore) {
+      throw new Error('Sessions en production : fournissez un store (new App(routes, connect, { sessionStore })) ou désactivez-les avec SESSION_ENABLED=false. Le MemoryStore n\'est pas fait pour la production.');
+    }
+    return session({
+      name: process.env.SESSION_COOKIE_NAME || 'sid',
+      secret: process.env.SECRET_SESSION as string,
+      store: this.options.sessionStore,
+      resave: false,
+      saveUninitialized: false,
+      cookie: { httpOnly: true, sameSite: 'lax', secure: isProd },
+    });
   }
 
   private initializeRoutes(routes: Routes[]) {
@@ -91,6 +123,7 @@ class App {
   }
 
   private initializeSwagger() {
+    if (!isSwaggerEnabled(this.env)) return;
     const swaggerDoc = buildSwaggerDoc(this.routes);
     this.app.use('/swagger/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
   }

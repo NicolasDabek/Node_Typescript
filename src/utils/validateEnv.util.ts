@@ -5,7 +5,8 @@ export function validateEnv() {
     NODE_ENV: str({ default: 'development' }),
     PORT: port({ default: 3000 }),
     JWT_SECRET: str({ desc: 'Secret de signature des JWT (obligatoire)' }),
-    SECRET_SESSION: str({ desc: 'Secret des sessions (obligatoire)' }),
+    // Obligatoire tant que les sessions sont actives (SESSION_ENABLED !== 'false').
+    SECRET_SESSION: process.env.SESSION_ENABLED === 'false' ? str({ default: '' }) : str({ desc: 'Secret des sessions (obligatoire)' }),
     DB_USERNAME: str({ desc: 'Utilisateur de la base (obligatoire)' }),
     DB_PASSWORD: str({ desc: 'Mot de passe de la base (obligatoire)' }),
     USER_PASSWORD_HASH_SALT: num({ default: 10 }),
