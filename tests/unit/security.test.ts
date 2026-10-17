@@ -28,6 +28,15 @@ describe('jwt.util', () => {
     expect(signAuthToken({ id: 1, username: 'a' }).expiresIn).toBe(3600);
   });
 
+  it('signe en HS256 et refuse tout autre algorithme, même avec le bon secret', () => {
+    const { token } = signAuthToken({ id: 1, username: 'a' });
+    expect((jwt.decode(token, { complete: true }) as any).header.alg).toBe('HS256');
+    const hs512 = jwt.sign({ id: 1 }, process.env.JWT_SECRET as string, { algorithm: 'HS512' });
+    expect(() => verifyAuthToken(hs512)).toThrow(/invalid algorithm/);
+    const none = jwt.sign({ id: 1 }, '', { algorithm: 'none' } as any);
+    expect(() => verifyAuthToken(none)).toThrow();
+  });
+
   it('refuse un token signé avec un autre secret', () => {
     const forged = jwt.sign({ id: 1 }, 'default_secret');
     expect(() => verifyAuthToken(forged)).toThrow();
@@ -52,6 +61,16 @@ describe('validateEnv', () => {
     delete process.env[name];
     expect(() => validateEnv()).toThrow('exit');
     expect(exit).toHaveBeenCalledWith(1);
+  });
+});
+
+describe('validateEnv : SESSION_ENABLED=false', () => {
+  it('SECRET_SESSION n’est plus obligatoire', () => {
+    const exit = jest.spyOn(process, 'exit').mockImplementation((() => { throw new Error('exit'); }) as any);
+    process.env.SESSION_ENABLED = 'false';
+    delete process.env.SECRET_SESSION;
+    expect(() => validateEnv()).not.toThrow();
+    exit.mockRestore();
   });
 });
 

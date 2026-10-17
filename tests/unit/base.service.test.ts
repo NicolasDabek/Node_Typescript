@@ -91,7 +91,7 @@ describe('BaseService (modèles Sequelize mockés)', () => {
 
   it('applique le hook serialize d’une surcharge', async () => {
     jest.spyOn(registry, 'assertCrudAccess').mockReturnValue({
-      name: 'products', exposed: true, auth: false, operations: ['list'], hiddenFields: [],
+      name: 'products', exposed: true, auth: false, publicRead: false, operations: ['list'], hiddenFields: [],
       hooks: { serialize: r => ({ ...r, extra: true }) },
     });
     jest.spyOn(products, 'findAll').mockResolvedValue([record({ id: 1 })]);

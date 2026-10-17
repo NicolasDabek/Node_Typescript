@@ -96,11 +96,12 @@ describe('${className} API (CRUD générique bloqué)', () => {
 }
 
 function crudModelTestTemplate(modelName: string, className: string, primaryKey: string, numericFields: string[], withHooks: boolean): string {
-  const hooksBefore = withHooks ? `
+  // Le CRUD générique exige un JWT par défaut : un utilisateur de test est créé (tests/helpers/auth.ts).
+  const hooksBefore = `
   beforeAll(async () => {
-    await app.dbSequelize.sequelize.sync({ force: true });
+${withHooks ? '    await app.dbSequelize.sequelize.sync({ force: true });\n' : ''}    auth = await authHeader();
   });
-` : '';
+`;
   const hooksAfter = withHooks ? `
   afterAll(async () => {
     await app.dbSequelize.sequelize.close();
@@ -117,8 +118,10 @@ ${numericFields.map(f => `    expect(Number(getResponse.body.datas.${f})).toBeCl
 import { app } from '../../src/index';
 import { generateFakeData } from '../../generators/generateTests';
 import { ${modelName} } from '../../src/models/${modelName}';
+import { authHeader } from '../helpers/auth';
 
 describe('${className} API', () => {
+  let auth: string;
   let transaction: any;
   const instanceData = generateFakeData(${modelName}.rawAttributes);
   let createdData: ${modelName};
@@ -131,10 +134,17 @@ ${hooksBefore}
     await transaction.rollback();
   });
 ${hooksAfter}
+  it('should reject anonymous access to ${modelName}', async () => {
+    const { ${primaryKey}, ...restInstanceData } = instanceData;
+    await request(app.app).post('/${modelName}').send(restInstanceData).expect(401);
+    await request(app.app).get('/${modelName}').expect(401);
+  });
+
   it('should create a new ${modelName}', async () => {
     const { ${primaryKey}, ...restInstanceData } = instanceData;
     const response = await request(app.app)
       .post('/${modelName}')
+      .set('Authorization', auth)
       .send(restInstanceData);
     createdData = response.body.datas;
     expect(response.statusCode).toEqual(201);
@@ -145,6 +155,7 @@ ${hooksAfter}
     const idCreatedData = createdData.${primaryKey};
     const getResponse = await request(app.app)
       .get(\`/${modelName}/\${idCreatedData}\`)
+      .set('Authorization', auth)
       .expect(200);
     expect(getResponse.body.datas).toHaveProperty('${primaryKey}', idCreatedData);
 ${compare}
@@ -156,6 +167,7 @@ ${compare}
     const { ${primaryKey}, ...restUpdatedData } = updatedData;
     const updateResponse = await request(app.app)
       .put(\`/${modelName}/\${idCreatedData}\`)
+      .set('Authorization', auth)
       .send(restUpdatedData);
     expect(updateResponse.statusCode).toEqual(200);
     expect(updateResponse.body.datas).not.toEqual(createdData);
@@ -166,10 +178,12 @@ ${compare}
     const idCreatedData = createdData.${primaryKey};
     await request(app.app)
       .delete(\`/${modelName}/\${idCreatedData}\`)
+      .set('Authorization', auth)
       .expect(200);
 
     await request(app.app)
       .get(\`/${modelName}/\${idCreatedData}\`)
+      .set('Authorization', auth)
       .expect(404);
   });
 
@@ -177,6 +191,7 @@ ${compare}
     const nonExistentId = 999999;
     await request(app.app)
       .get(\`/${modelName}/\${nonExistentId}\`)
+      .set('Authorization', auth)
       .expect(404);
   });
 });

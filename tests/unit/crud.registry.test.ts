@@ -21,9 +21,8 @@ describe('Registre CRUD', () => {
     expect(resolveCrudModel('users').exposed).toBe(true);
   });
 
-  it('applique GENERIC_CRUD_AUTH et liste tous les modèles', () => {
-    process.env.GENERIC_CRUD_AUTH = 'true';
-    expect(resolveCrudModel('products').auth).toBe(true);
+  it('exige un JWT par défaut et liste tous les modèles', () => {
+    expect(resolveCrudModel('products')).toMatchObject({ auth: true, publicRead: false });
     expect(listCrudModels().map(m => m.name).sort()).toEqual(['products', 'users']);
   });
 });

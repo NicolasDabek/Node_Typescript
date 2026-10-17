@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import DB from '../databases';
 import HttpException from '../exceptions/HttpException';
-import { ALL_CRUD_OPERATIONS, CrudModelOptions, CrudOperation, ResolvedCrudModel } from './crud.interface';
+import { ALL_CRUD_OPERATIONS, READ_CRUD_OPERATIONS, CrudModelOptions, CrudOperation, ResolvedCrudModel } from './crud.interface';
 
 const csv = (value?: string): string[] =>
   (value || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
@@ -38,7 +38,8 @@ export function resolveCrudModel(modelName: string, source: Record<string, CrudM
   return {
     name,
     exposed: override.exposed ?? exposedByEnv,
-    auth: override.auth ?? process.env.GENERIC_CRUD_AUTH === 'true',
+    auth: override.auth ?? true,
+    publicRead: override.publicRead ?? process.env.GENERIC_CRUD_PUBLIC_READ === 'true',
     operations: override.operations ?? ALL_CRUD_OPERATIONS,
     hiddenFields: override.hiddenFields ?? [],
     hooks: override.hooks ?? {},
@@ -48,6 +49,20 @@ export function resolveCrudModel(modelName: string, source: Record<string, CrudM
 /** Tous les modèles Sequelize connus, avec leur configuration CRUD. */
 export function listCrudModels(): ResolvedCrudModel[] {
   return Object.keys(DB.Models).map(name => resolveCrudModel(name));
+}
+
+/**
+ * JWT requis pour cette opération ? Par défaut oui pour tout ; les lectures peuvent être
+ * ouvertes (publicRead / GENERIC_CRUD_PUBLIC_READ), les écritures jamais sauf `auth: false` explicite.
+ */
+export function requiresAuth(config: ResolvedCrudModel, operation: CrudOperation): boolean {
+  if (!config.auth) return false;
+  return !(config.publicRead && READ_CRUD_OPERATIONS.includes(operation));
+}
+
+/** Premier segment du chemin, normalisé ("/Products/12" -> "products"). */
+export function modelNameFromPath(pathName: string): string {
+  return normalizeModelName(pathName.split('/').filter(Boolean)[0]);
 }
 
 export function isModelExposed(modelName: string): boolean {

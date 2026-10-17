@@ -23,7 +23,7 @@ module.exports = {
     // Tests unitaires : aucune base de données (DB/env/fs mockés), voir tests/unit/setup-env.ts
     { ...common, displayName: 'unit', testMatch: ['<rootDir>/tests/unit/**/*.test.ts'], setupFiles: ['<rootDir>/tests/unit/setup-env.ts'] },
     // Tests d'intégration : base MySQL/MariaDB réelle (tests/models générés par gen-tests, tests/integration)
-    { ...common, displayName: 'integration', testMatch: ['<rootDir>/tests/models/**/*.test.ts', '<rootDir>/tests/integration/**/*.test.ts'] },
+    { ...common, displayName: 'integration', testMatch: ['<rootDir>/tests/models/**/*.test.ts', '<rootDir>/tests/integration/**/*.test.ts'], globalSetup: '<rootDir>/tests/integration/global-setup.ts' },
   ],
   collectCoverageFrom: [
     'src/**/*.ts',

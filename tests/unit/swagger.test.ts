@@ -87,10 +87,12 @@ describe('buildSwaggerDoc', () => {
       '/users/login', '/users/register',
     ]);
     expect(op(doc, '/products', 'post')).toMatchObject({ operationId: 'create_products', requestBody: { required: true } });
-    expect(Object.keys(op(doc, '/products', 'post').responses)).toEqual(['201', '400', '500']);
+    expect(Object.keys(op(doc, '/products', 'post').responses)).toEqual(['201', '400', '401', '500']);
     expect(op(doc, '/products/{id}', 'get').parameters).toEqual([{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }]);
     expect(op(doc, '/products/{id}', 'delete').responses).toHaveProperty('404');
-    expect(op(doc, '/products', 'get').security).toBeUndefined();
+    // JWT exigé par défaut sur tout le CRUD générique
+    expect(op(doc, '/products', 'get').security).toEqual([{ bearerAuth: [] }]);
+    expect(op(doc, '/products/{id}', 'delete').security).toEqual([{ bearerAuth: [] }]);
     expect(op(doc, '/products/onefield/{fieldName}', 'get').parameters[0].schema.type).toBe('string');
     expect(op(doc, '/users/login', 'post').requestBody.content['application/json'].schema).toEqual({ $ref: '#/components/schemas/Login' });
     expect(op(doc, '/users/login', 'post').responses).toHaveProperty('401');
@@ -106,8 +108,9 @@ describe('buildSwaggerDoc', () => {
     process.env.CRUD_BLOCKED_MODELS = '';
     const real = registry.resolveCrudModel;
     jest.spyOn(registry, 'listCrudModels').mockReturnValue([
-      { ...real('products'), auth: true, operations: ['list', 'read'] },
-      { ...real('users') },
+      { ...real('products'), operations: ['list', 'read'] },
+      { ...real('users'), publicRead: true },
+      { ...real('open'), auth: false },
       { ...real('ghost') },
     ]);
     const custom = Router();
@@ -122,7 +125,9 @@ describe('buildSwaggerDoc', () => {
     expect(op(doc, '/products', 'get').security).toEqual([{ bearerAuth: [] }]);
     expect(op(doc, '/products', 'get').responses).toHaveProperty('401');
     expect(op(doc, '/products', 'post')).toBeUndefined();
-    expect(op(doc, '/users', 'post')).toBeDefined();
+    expect(op(doc, '/users', 'post').security).toEqual([{ bearerAuth: [] }]);
+    expect(op(doc, '/users', 'get').security).toBeUndefined();
+    expect(op(doc, '/users', 'get').responses).not.toHaveProperty('401');
     expect(doc.paths['/products/touch']).toBeUndefined();
     expect(op(doc, '/health', 'get')).toMatchObject({ tags: ['health'], summary: 'GET /health' });
     expect(op(doc, '/health', 'get').responses['200'].content['application/json'].schema).toEqual({ type: 'object' });

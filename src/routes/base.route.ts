@@ -6,7 +6,7 @@ import authMiddleware from '../middlewares/auth.middleware';
 import { RequestWithUser } from '../interfaces/auth.interface';
 import DB from '../databases';
 import { Model } from 'sequelize';
-import { assertCrudAccess } from '../crud/registry';
+import { assertCrudAccess, requiresAuth } from '../crud/registry';
 import { CrudOperation } from '../crud/crud.interface';
 
 /**
@@ -26,11 +26,11 @@ class BaseRoute implements Route {
     this.initializeRoutes();
   }
 
-  /** Vérifie l'accès (403 avant toute validation) puis applique l'auth JWT si le modèle l'exige. */
+  /** Vérifie l'accès (403 avant toute validation) puis exige un JWT (par défaut ; voir requiresAuth). */
   private guard = (operation: CrudOperation) => (req: Request, res: Response, next: NextFunction) => {
     try {
       const config = assertCrudAccess(req.params.model, operation);
-      if (config.auth) return authMiddleware(req as RequestWithUser<Model>, res, next);
+      if (requiresAuth(config, operation)) return authMiddleware(req as RequestWithUser<Model>, res, next);
       next();
     } catch (error) {
       next(error);

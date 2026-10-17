@@ -1,8 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { loadOverrides, assertCrudAccess, getBlockedModels, isModelExposed, normalizeModelName, resolveCrudModel } from '../../src/crud/registry';
-import { assertModelAccessible, extractModelFromPath } from '../../src/utils/modelAccess.util';
+import { loadOverrides, requiresAuth, modelNameFromPath, assertCrudAccess, getBlockedModels, isModelExposed, normalizeModelName, resolveCrudModel } from '../../src/crud/registry';
 import { SequelizeUtil } from '../../src/utils/sequelize.util';
 import usersCrud from '../../src/crud/overrides/users.crud';
 import DB from '../../src/databases';
@@ -29,7 +28,7 @@ describe('registre CRUD : règles d’exposition', () => {
 
   it('valeurs par défaut sans surcharge', () => {
     expect(resolveCrudModel('PRODUCTS')).toEqual({
-      name: 'products', exposed: true, auth: false,
+      name: 'products', exposed: true, auth: true, publicRead: false,
       operations: ['list', 'read', 'field', 'search', 'create', 'update', 'delete'], hiddenFields: [], hooks: {},
     });
   });
@@ -73,21 +72,48 @@ describe('registre CRUD : chargement des surcharges', () => {
     expect(loadOverrides().users).toBe(usersCrud);
   });
 
-  it('GENERIC_CRUD_AUTH et CRUD_ALLOWED_MODELS', () => {
-    process.env.GENERIC_CRUD_AUTH = 'true';
+  it('GENERIC_CRUD_PUBLIC_READ et CRUD_ALLOWED_MODELS', () => {
+    process.env.GENERIC_CRUD_PUBLIC_READ = 'true';
     process.env.CRUD_ALLOWED_MODELS = 'products';
     process.env.CRUD_BLOCKED_MODELS = '';
-    expect(resolveCrudModel('products')).toMatchObject({ exposed: true, auth: true });
+    expect(resolveCrudModel('products')).toMatchObject({ exposed: true, auth: true, publicRead: true });
     expect(resolveCrudModel('users').exposed).toBe(false);
   });
 });
 
-describe('modelAccess.util (compatibilité)', () => {
-  it('extractModelFromPath et assertModelAccessible', () => {
-    expect(extractModelFromPath('/Products/12')).toBe('products');
-    expect(extractModelFromPath('/')).toBe('');
-    expect(assertModelAccessible('Products')).toBe('products');
-    expect(() => assertModelAccessible('users')).toThrow(/not exposed/);
+describe('registre CRUD : authentification par opération', () => {
+  const READS = ['list', 'read', 'field', 'search'] as const;
+  const WRITES = ['create', 'update', 'delete'] as const;
+
+  it('par défaut : JWT exigé pour toutes les opérations', () => {
+    const config = resolveCrudModel('products');
+    for (const op of [...READS, ...WRITES]) expect(requiresAuth(config, op)).toBe(true);
+  });
+
+  it('lecture anonyme seulement si activée (env ou surcharge), jamais l’écriture', () => {
+    process.env.GENERIC_CRUD_PUBLIC_READ = 'true';
+    const byEnv = resolveCrudModel('products');
+    const byOverride = resolveCrudModel('orders', { orders: { publicRead: true } });
+    for (const config of [byEnv, byOverride]) {
+      for (const op of READS) expect(requiresAuth(config, op)).toBe(false);
+      for (const op of WRITES) expect(requiresAuth(config, op)).toBe(true);
+    }
+    expect(resolveCrudModel('orders', { orders: { publicRead: false } }).publicRead).toBe(false);
+  });
+
+  it('GENERIC_CRUD_AUTH (ancienne variable) n’ouvre plus rien', () => {
+    process.env.GENERIC_CRUD_AUTH = 'false';
+    expect(requiresAuth(resolveCrudModel('products'), 'delete')).toBe(true);
+  });
+
+  it('auth: false explicite dans une surcharge rend le modèle anonyme', () => {
+    const config = resolveCrudModel('open', { open: { auth: false } });
+    for (const op of [...READS, ...WRITES]) expect(requiresAuth(config, op)).toBe(false);
+  });
+
+  it('modelNameFromPath', () => {
+    expect(modelNameFromPath('/Products/12')).toBe('products');
+    expect(modelNameFromPath('/')).toBe('');
   });
 });
 

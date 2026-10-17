@@ -2,7 +2,7 @@ import { getMetadataStorage } from 'class-validator';
 import Route from '../interfaces/routes.interface';
 import DB from '../databases';
 import { createDtos, CreateDtoKeys } from '../dtos';
-import { listCrudModels } from '../crud/registry';
+import { listCrudModels, requiresAuth } from '../crud/registry';
 import { CrudOperation, ResolvedCrudModel } from '../crud/crud.interface';
 import { modelToSchemas } from './modelToSchema';
 import { SchemaObject } from './schemaObject.interface';
@@ -127,7 +127,8 @@ export function buildSwaggerDoc(routes: Route[]): SwaggerDoc {
             500: errorRef('InternalError'),
           };
           if (parameters.some(p => p.name === 'id')) responses[404] = errorRef('NotFound');
-          if (model.auth) responses[401] = errorRef('Unauthorized');
+          const auth = requiresAuth(model, described.op);
+          if (auth) responses[401] = errorRef('Unauthorized');
           setOperation(doc, path, method, {
             tags: [model.name],
             summary: described.summary,
@@ -135,7 +136,7 @@ export function buildSwaggerDoc(routes: Route[]): SwaggerDoc {
             parameters: parameters.length ? parameters : undefined,
             requestBody: described.body ? { required: true, ...json(described.body) } : undefined,
             responses,
-            security: model.auth ? [{ bearerAuth: [] }] : undefined,
+            security: auth ? [{ bearerAuth: [] }] : undefined,
           });
         }
       } else {

@@ -3,7 +3,7 @@ import { validate, ValidationError } from 'class-validator';
 import { RequestHandler } from 'express';
 import HttpException from '../exceptions/HttpException';
 import { dtos, DtoKeys, createDtos } from '../dtos/index';
-import { extractModelFromPath } from '../utils/modelAccess.util';
+import { modelNameFromPath } from '../crud/registry';
 
 const DATE_ERROR = 'must be a Date instance';
 
@@ -24,7 +24,7 @@ const validationMiddleware = (
 
   return async (req, _res, next) => {
     try {
-      const modelName = (req.params.model ? req.params.model.toLowerCase() : extractModelFromPath(req.path)) as DtoKeys;
+      const modelName = (req.params.model ? req.params.model.toLowerCase() : modelNameFromPath(req.path)) as DtoKeys;
       const dtoClass = (value === 'body' ? createDtos : dtos)[modelName] as ClassConstructor<object> | undefined;
       if (!dtoClass) throw new HttpException(400, `No DTO found for model ${modelName}`);
 
