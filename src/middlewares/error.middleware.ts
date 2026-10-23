@@ -8,7 +8,7 @@ import { logger } from '../utils/logger.util';
  * - Toute autre erreur : 500 générique (le détail reste dans les logs, jamais dans la réponse).
  * Les en-têtes et le corps de la requête ne sont pas journalisés (tokens, mots de passe).
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 const errorMiddleware = (error: Error, req: Request, res: Response, _next: NextFunction) => {
   const isHttp = error instanceof HttpException;
   const status = isHttp ? error.status : 500;

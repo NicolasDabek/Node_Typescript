@@ -20,7 +20,7 @@ export function loadOverrides(dir = path.join(__dirname, 'overrides')): Record<s
   for (const file of fs.readdirSync(dir)) {
     const match = /^(.+)\.crud\.(ts|js)$/.exec(file);
     if (!match || file.endsWith('.d.ts')) continue;
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const imported = require(path.join(dir, file));
     overrides[normalizeModelName(match[1])] = imported.default || imported;
   }

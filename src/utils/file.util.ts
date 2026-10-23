@@ -109,10 +109,10 @@ export class FileUtil {
    * @returns {Promise<string[]>} Les fichiers, dossiers et sous-dossier dans le dossier.
    */
   public static async readDirectoryAndSubDirectory(dirPath: string): Promise<Record<string, any>> {
-    const directoriesAndFiles: Record<string, {}> = {};
+    const directoriesAndFiles: Record<string, any> = {};
 
     // Fonction récursive pour lire les fichiers et les sous-dossiers
-    const readFileOrSubDirectory = async (currentPath: string, result: Record<string, {}>) => {
+    const readFileOrSubDirectory = async (currentPath: string, result: Record<string, any>) => {
       try {
         const files = await fs.promises.readdir(currentPath);
 
@@ -122,7 +122,7 @@ export class FileUtil {
 
           if (stats.isDirectory()) {
             // Créez un objet pour le sous-dossier et le rajoutez au résultat
-            const subDirectory: Record<string, {}> = {};
+            const subDirectory: Record<string, any> = {};
             result[fileOrFolder] = subDirectory;
 
             // Appelez récursivement la fonction pour traiter le sous-dossier

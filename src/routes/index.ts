@@ -12,7 +12,7 @@ export function loadCustomRoutes(dir = __dirname): Route[] {
   });
 
   for (const file of files) {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const imported = require(path.join(dir, file));
     const Ctor = imported.default || imported;
     if (typeof Ctor === 'function') {

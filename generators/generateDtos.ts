@@ -50,7 +50,7 @@ export class ${className}Dto extends BaseDto {
 ${fields}
 }`;
   for (const modelName in models) {
-    if (models.hasOwnProperty(modelName)) {
+    if (Object.prototype.hasOwnProperty.call(models, modelName)) {
       const model = models[modelName];
       let dtoFields = '';
       let createDtoFields = '';
